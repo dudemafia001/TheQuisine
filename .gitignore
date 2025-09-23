@@ -1,0 +1,10 @@
+# Node dependencies
+node_modules/
+
+# Env files
+.env
+
+# Build output
+.next/
+dist/
+build/

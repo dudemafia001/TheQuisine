@@ -1,7 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
-import * as bootstrap from "bootstrap";
 import "./menu.css";
 
 export default function MenuPage() {

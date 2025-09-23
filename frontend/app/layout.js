@@ -5,10 +5,10 @@ import "./globals.css";
 
 export default function RootLayout({ children }) {
   useEffect(() => {
-    // Dynamically import Bootstrap JS client-side only
+    // Load Bootstrap JS only in browser
     import("bootstrap/dist/js/bootstrap.bundle.min.js")
-      .then(() => console.log("✅ Bootstrap JS loaded"))
-      .catch((err) => console.error("❌ Bootstrap JS failed", err));
+      .then(() => console.log("✅ Bootstrap JS loaded (client-side only)"))
+      .catch((err) => console.error("❌ Bootstrap JS failed:", err));
   }, []);
 
   return (

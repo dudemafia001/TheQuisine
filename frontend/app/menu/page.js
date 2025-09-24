@@ -8,8 +8,6 @@ export default function MenuPage() {
   const [selectedCategory, setSelectedCategory] = useState("");
   const [cart, setCart] = useState({});
   const [selectedVariants, setSelectedVariants] = useState({});
-  const [showCategories, setShowCategories] = useState(false);
-  const [username, setUsername] = useState(null);
 
   useEffect(() => {
     // ✅ Load Bootstrap only on client
@@ -33,9 +31,6 @@ export default function MenuPage() {
         }
       })
       .catch((err) => console.error("Fetch error:", err));
-
-    const storedUser = localStorage.getItem("username");
-    if (storedUser) setUsername(storedUser);
   }, []);
 
   const categories = [...new Set(products.map((p) => p.category.trim()))];
@@ -106,98 +101,76 @@ export default function MenuPage() {
             <span className="navbar-brand mb-0 h1">The Quisine 🍲</span>
 
             <div className="d-flex align-items-center">
-              <button
-                className="btn btn-sm text-white d-md-none me-3"
-                style={{ backgroundColor: "#dd9933" }}
-                onClick={() => setShowCategories(!showCategories)}
-              >
-                ☰ Categories
-              </button>
-
-              {/* ✅ User Account */}
-              {username ? (
-                <div className="dropdown">
-                  <button
-                    className="btn btn-light dropdown-toggle"
-                    type="button"
-                    id="userMenuButton"
-                    data-bs-toggle="dropdown"
-                    aria-expanded="false"
-                  >
-                    👤 {username}
-                  </button>
-                  <ul
-                    className="dropdown-menu dropdown-menu-end"
-                    aria-labelledby="userMenuButton"
-                  >
-                    <li>
-                      <a className="dropdown-item" href="/orders">
-                        Orders
-                      </a>
-                    </li>
-                    <li>
-                      <a className="dropdown-item" href="/account">
-                        Account Details
-                      </a>
-                    </li>
-                    <li>
-                      <button
-                        className="dropdown-item text-danger"
-                        onClick={() => {
-                          localStorage.removeItem("username");
-                          setUsername(null);
-                          window.location.href = "/auth";
-                        }}
-                      >
-                        Sign Out
-                      </button>
-                    </li>
-                  </ul>
-                </div>
-              ) : (
-                <a
-                  href="/auth"
-                  className="btn btn-sm text-white"
-                  style={{ backgroundColor: "#dd9933" }}
-                >
-                  Sign In
-                </a>
-              )}
+              {/* Categories are now handled by the new responsive filter above */}
             </div>
           </div>
         </nav>
+
+
 
         <div
           className="container-fluid"
           style={{ paddingTop: "70px", paddingBottom: "80px" }}
         >
-          <div className="row">
-            {/* Sidebar */}
-            <aside className="col-md-3 border-end pt-4 bg-white d-none d-md-block">
-              <h4 className="fw-bold mb-3">Categories</h4>
-              <ul className="list-unstyled">
-                {categories.map((cat) => {
-                  const count = products.filter((p) => p.category === cat).length;
-                  return (
-                    <li key={cat} className="mb-2">
+          {/* New Responsive Category Filter */}
+          <div className="row mb-4">
+            <div className="col-12">
+              <div className="category-filter-container">
+                <h4 className="fw-bold mb-3" style={{ color: "#124f31" }}>
+                  Filter by Category
+                </h4>
+                
+                {/* Desktop & Tablet: Horizontal Scrollable Pills */}
+                <div className="d-none d-md-flex category-pills-container">
+                  <button
+                    onClick={() => setSelectedCategory("")}
+                    className={`category-pill ${
+                      selectedCategory === "" ? "active" : ""
+                    }`}
+                  >
+                    All Items ({products.length})
+                  </button>
+                  {categories.map((cat) => {
+                    const count = products.filter((p) => p.category === cat).length;
+                    return (
                       <button
+                        key={cat}
                         onClick={() => setSelectedCategory(cat)}
-                        className={`btn w-100 text-start fw-bold ${
-                          selectedCategory === cat
-                            ? "active-category"
-                            : "btn-outline-secondary"
+                        className={`category-pill ${
+                          selectedCategory === cat ? "active" : ""
                         }`}
                       >
                         {cat} ({count})
                       </button>
-                    </li>
-                  );
-                })}
-              </ul>
-            </aside>
+                    );
+                  })}
+                </div>
 
-            {/* Products */}
-            <main className="col-md-9 pt-4">
+                {/* Mobile: Dropdown Select */}
+                <div className="d-md-none">
+                  <select
+                    className="form-select category-select"
+                    value={selectedCategory}
+                    onChange={(e) => setSelectedCategory(e.target.value)}
+                  >
+                    <option value="">All Items ({products.length})</option>
+                    {categories.map((cat) => {
+                      const count = products.filter((p) => p.category === cat).length;
+                      return (
+                        <option key={cat} value={cat}>
+                          {cat} ({count})
+                        </option>
+                      );
+                    })}
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Products */}
+          <div className="row">
+            <main className="col-12">
               <h2 className="fw-bold mb-4" style={{ color: "#124f31" }}>
                 {selectedCategory || "All Items"}
               </h2>
@@ -217,7 +190,7 @@ export default function MenuPage() {
                     const qty = cart[cartKey] || 0;
 
                     return (
-                      <div key={item._id} className="col-12 col-sm-6 col-lg-4">
+                      <div key={item._id} className="col-12 col-sm-6 col-md-6 col-lg-4 col-xl-3">
                         <div className="card h-100 shadow-sm">
                           <div className="card-body d-flex flex-column">
                             <h5 className="card-title fw-bold">{item.name}</h5>

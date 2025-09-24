@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useAuth } from "../contexts/AuthContext";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "./auth.css";
 
@@ -8,14 +9,14 @@ export default function AuthPage() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
+  const { login, isAuthenticated } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
-    const storedUser = localStorage.getItem("username");
-    if (storedUser) {
+    if (isAuthenticated) {
       router.push("/menu");
     }
-  }, [router]);
+  }, [isAuthenticated, router]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -30,7 +31,7 @@ export default function AuthPage() {
 
       const data = await res.json();
       if (res.ok) {
-        localStorage.setItem("username", username);
+        login(username);
         setMessage(data.message);
 
         setTimeout(() => {

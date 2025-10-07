@@ -1,5 +1,17 @@
 @import "tailwindcss";
 
+/* Reset margins and padding */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+}
+
 :root {
   --background: #ffffff;
   --foreground: #171717;
@@ -22,8 +34,6 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
-  /* Add top padding to account for fixed announcement bar */
-  padding-top: 50px;
 }
 
 /* Announcement Bar Styles */
@@ -66,6 +76,16 @@ body {
   text-decoration: none;
 }
 
+.announcement-logo {
+  max-height: 35px;
+  width: auto;
+  transition: opacity 0.3s ease;
+}
+
+.announcement-logo:hover {
+  opacity: 0.8;
+}
+
 /* Ensure proper spacing and alignment */
 .announcement-bar .d-flex.justify-content-between {
   width: 100%;
@@ -78,7 +98,7 @@ body {
 /* Mobile responsiveness */
 @media (max-width: 991px) {
   body {
-    padding-top: 50px;
+    padding-top: 0px;
   }
   
   .announcement-bar {
@@ -118,6 +138,11 @@ body {
     padding-left: 10px;
     padding-right: 10px;
   }
+  
+  .announcement-logo {
+    max-height: 30px;
+    width: auto;
+  }
 }
 
 /* Extra responsive adjustments */
@@ -125,6 +150,11 @@ body {
   .announcement-link {
     padding: 6px 4px !important;
     font-size: 11px;
+  }
+  
+  .announcement-logo {
+    max-height: 25px;
+    width: auto;
   }
 }
 

@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 
 export default function AnnouncementBar() {
   const { user, logout, isAuthenticated } = useAuth();
@@ -38,8 +39,17 @@ export default function AnnouncementBar() {
     <div className="announcement-bar fixed-top">
       <div className="container-fluid h-100">
         <div className="d-flex align-items-center justify-content-between h-100">
-          {/* Left Side - Navigation Links */}
+          {/* Left Side - Logo and Navigation Links */}
           <div className="d-flex align-items-center">
+            <Link href="/" className="d-flex align-items-center me-3">
+              <Image
+                src="/logo text.png"
+                alt="The Quisine Logo"
+                width={120}
+                height={40}
+                className="announcement-logo"
+              />
+            </Link>
             <Link href="/menu" className="nav-link announcement-link">
               Menu
             </Link>
@@ -47,7 +57,10 @@ export default function AnnouncementBar() {
               About Us
             </Link>
             <Link href="/services" className="nav-link announcement-link">
-              Services
+              Service
+            </Link>
+            <Link href="/contact" className="nav-link announcement-link">
+              Contact
             </Link>
           </div>
           

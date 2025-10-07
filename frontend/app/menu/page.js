@@ -2,12 +2,14 @@
 import { useEffect, useState } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "./menu.css";
+import { useCart } from "../contexts/CartContext";
 
 export default function MenuPage() {
   const [products, setProducts] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState("");
   const [cart, setCart] = useState({});
   const [selectedVariants, setSelectedVariants] = useState({});
+  const { addToCart: addToCartContext, updateQuantity, removeFromCart } = useCart();
 
   useEffect(() => {
     // ✅ Load Bootstrap only on client
@@ -46,11 +48,16 @@ export default function MenuPage() {
   const addToCart = (id, variant) => {
     const key = `${id}_${variant}`;
     setCart((prev) => ({ ...prev, [key]: 1 }));
+    addToCartContext(key);
   };
 
   const increaseQty = (id, variant) => {
     const key = `${id}_${variant}`;
-    setCart((prev) => ({ ...prev, [key]: (prev[key] || 1) + 1 }));
+    setCart((prev) => {
+      const newQty = (prev[key] || 1) + 1;
+      updateQuantity(key, newQty);
+      return { ...prev, [key]: newQty };
+    });
   };
 
   const decreaseQty = (id, variant) => {
@@ -60,8 +67,10 @@ export default function MenuPage() {
       if (newQty <= 0) {
         const updated = { ...prev };
         delete updated[key];
+        removeFromCart(key);
         return updated;
       }
+      updateQuantity(key, newQty);
       return { ...prev, [key]: newQty };
     });
   };
@@ -92,205 +101,176 @@ export default function MenuPage() {
   return (
     <>
       <div className="menu-page">
-        {/* ✅ Navbar */}
-        <nav
-          className="navbar navbar-dark fixed-top"
-          style={{ backgroundColor: "#124f31" }}
-        >
-          <div className="container-fluid">
-            <span className="navbar-brand mb-0 h1">The Quisine 🍲</span>
-
-            <div className="d-flex align-items-center">
-              {/* Categories are now handled by the new responsive filter above */}
-            </div>
+        {/* Hero Section */}
+        <section className="hero-section">
+          <div className="hero-content">
+            <h1 className="hero-title">Our Premium Menu</h1>
+            <p className="hero-subtitle">
+              Discover our range of handcrafted culinary delights made with natural 
+              ingredients and traditional recipes
+            </p>
           </div>
-        </nav>
+        </section>
 
-
-
-        <div
-          className="container-fluid"
-          style={{ paddingTop: "70px", paddingBottom: "80px" }}
-        >
-          {/* New Responsive Category Filter */}
-          <div className="row mb-4">
-            <div className="col-12">
-              <div className="category-filter-container">
-                <h4 className="fw-bold mb-3" style={{ color: "#124f31" }}>
-                  Filter by Category
-                </h4>
-                
-                {/* Desktop & Tablet: Horizontal Scrollable Pills */}
-                <div className="d-none d-md-flex category-pills-container">
+        <div className="main-container">
+          {/* Category Filter */}
+          <div className="filter-section">
+            <div className="filter-container">
+              {/* Desktop & Tablet: Horizontal Pills */}
+              <div className="category-pills d-none d-md-flex">
+                <button
+                  onClick={() => setSelectedCategory("")}
+                  className={`filter-pill ${
+                    selectedCategory === "" ? "active" : ""
+                  }`}
+                >
+                  All Items
+                </button>
+                {categories.map((cat) => (
                   <button
-                    onClick={() => setSelectedCategory("")}
-                    className={`category-pill ${
-                      selectedCategory === "" ? "active" : ""
+                    key={cat}
+                    onClick={() => setSelectedCategory(cat)}
+                    className={`filter-pill ${
+                      selectedCategory === cat ? "active" : ""
                     }`}
                   >
-                    All Items ({products.length})
+                    {cat}
                   </button>
-                  {categories.map((cat) => {
-                    const count = products.filter((p) => p.category === cat).length;
-                    return (
-                      <button
-                        key={cat}
-                        onClick={() => setSelectedCategory(cat)}
-                        className={`category-pill ${
-                          selectedCategory === cat ? "active" : ""
-                        }`}
-                      >
-                        {cat} ({count})
-                      </button>
-                    );
-                  })}
-                </div>
+                ))}
+              </div>
 
-                {/* Mobile: Dropdown Select */}
-                <div className="d-md-none">
-                  <select
-                    className="form-select category-select"
-                    value={selectedCategory}
-                    onChange={(e) => setSelectedCategory(e.target.value)}
-                  >
-                    <option value="">All Items ({products.length})</option>
-                    {categories.map((cat) => {
-                      const count = products.filter((p) => p.category === cat).length;
-                      return (
-                        <option key={cat} value={cat}>
-                          {cat} ({count})
-                        </option>
-                      );
-                    })}
-                  </select>
-                </div>
+              {/* Mobile: Dropdown */}
+              <div className="d-md-none">
+                <select
+                  className="mobile-filter-select"
+                  value={selectedCategory}
+                  onChange={(e) => setSelectedCategory(e.target.value)}
+                >
+                  <option value="">All Items</option>
+                  {categories.map((cat) => (
+                    <option key={cat} value={cat}>
+                      {cat}
+                    </option>
+                  ))}
+                </select>
               </div>
             </div>
           </div>
 
-          {/* Products */}
-          <div className="row">
-            <main className="col-12">
-              <h2 className="fw-bold mb-4" style={{ color: "#124f31" }}>
-                {selectedCategory || "All Items"}
-              </h2>
-
-              {filteredProducts.length === 0 ? (
+          {/* Products Grid */}
+          <div className="products-section">
+            {filteredProducts.length === 0 ? (
+              <div className="empty-state">
                 <p>No items found in this category.</p>
-              ) : (
-                <div className="row g-3">
-                  {filteredProducts.map((item) => {
-                    const selectedVariant =
-                      selectedVariants[item._id] || item.variants[0].type;
-                    const selectedPrice = item.variants.find(
-                      (v) => v.type === selectedVariant
-                    )?.price;
+              </div>
+            ) : (
+              <div className="products-grid">
+                {filteredProducts.map((item) => {
+                  const selectedVariant =
+                    selectedVariants[item._id] || item.variants[0].type;
+                  const selectedPrice = item.variants.find(
+                    (v) => v.type === selectedVariant
+                  )?.price;
 
-                    const cartKey = `${item._id}_${selectedVariant}`;
-                    const qty = cart[cartKey] || 0;
+                  const cartKey = `${item._id}_${selectedVariant}`;
+                  const qty = cart[cartKey] || 0;
 
-                    return (
-                      <div key={item._id} className="col-12 col-sm-6 col-md-6 col-lg-4 col-xl-3">
-                        <div className="card h-100 shadow-sm">
-                          <div className="card-body d-flex flex-column">
-                            <h5 className="card-title fw-bold">{item.name}</h5>
-                            <p className="card-text text-muted">
-                              {item.description}
-                            </p>
+                  return (
+                    <div key={item._id} className="product-card clean">
+                      <div className="product-content">
+                        <h3 className="product-title">{item.name}</h3>
+                        <p className="product-description">{item.description}</p>
 
-                            {item.variants.length > 1 && (
-                              <select
-                                className="form-select mb-2"
-                                value={selectedVariant}
-                                onChange={(e) =>
-                                  setSelectedVariants((prev) => ({
-                                    ...prev,
-                                    [item._id]: e.target.value,
-                                  }))
+                        {item.variants.length > 1 && (
+                          <select
+                            className="variant-select"
+                            value={selectedVariant}
+                            onChange={(e) =>
+                              setSelectedVariants((prev) => ({
+                                ...prev,
+                                [item._id]: e.target.value,
+                              }))
+                            }
+                          >
+                            {item.variants.map((v) => (
+                              <option key={v.type} value={v.type}>
+                                {v.type} - ₹{v.price}
+                              </option>
+                            ))}
+                          </select>
+                        )}
+
+                        <div className="price-section">
+                          <span className="product-price">₹{selectedPrice}</span>
+                        </div>
+
+                        <div className="product-actions">
+                          {qty > 0 ? (
+                            <div className="quantity-controls">
+                              <button
+                                className="qty-btn minus"
+                                onClick={() =>
+                                  decreaseQty(item._id, selectedVariant)
                                 }
                               >
-                                {item.variants.map((v) => (
-                                  <option key={v.type} value={v.type}>
-                                    {v.type} - ₹{v.price}
-                                  </option>
-                                ))}
-                              </select>
-                            )}
-
-                            <p className="fw-bold" style={{ color: "#124f31" }}>
-                              ₹{selectedPrice || item.variants[0].price}
-                            </p>
-
-                            <div className="mt-auto">
-                              {qty > 0 ? (
-                                <div className="d-flex align-items-center border rounded overflow-hidden">
-                                  <button
-                                    className="btn flex-fill"
-                                    style={{
-                                      background: "#dd9933",
-                                      color: "#fff",
-                                    }}
-                                    onClick={() =>
-                                      decreaseQty(item._id, selectedVariant)
-                                    }
-                                  >
-                                    –
-                                  </button>
-                                  <span className="flex-fill text-center fw-bold">
-                                    {qty}
-                                  </span>
-                                  <button
-                                    className="btn flex-fill"
-                                    style={{
-                                      background: "#124f31",
-                                      color: "#fff",
-                                    }}
-                                    onClick={() =>
-                                      increaseQty(item._id, selectedVariant)
-                                    }
-                                  >
-                                    +
-                                  </button>
-                                </div>
-                              ) : (
-                                <button
-                                  className="btn w-100 fw-bold"
-                                  style={{
-                                    background: "#124f31",
-                                    color: "#fff",
-                                  }}
-                                  onClick={() =>
-                                    addToCart(item._id, selectedVariant)
-                                  }
-                                >
-                                  Add to Cart
-                                </button>
-                              )}
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                  <line x1="5" y1="12" x2="19" y2="12"></line>
+                                </svg>
+                              </button>
+                              <span className="qty-display">{qty} in cart</span>
+                              <button
+                                className="qty-btn plus"
+                                onClick={() =>
+                                  increaseQty(item._id, selectedVariant)
+                                }
+                              >
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                  <line x1="12" y1="5" x2="12" y2="19"></line>
+                                  <line x1="5" y1="12" x2="19" y2="12"></line>
+                                </svg>
+                              </button>
+                              <button
+                                className="remove-from-cart"
+                                onClick={() => {
+                                  setCart((prev) => {
+                                    const updated = { ...prev };
+                                    delete updated[cartKey];
+                                    return updated;
+                                  });
+                                  removeFromCart(cartKey);
+                                }}
+                              >
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                  <polyline points="3,6 5,6 21,6"></polyline>
+                                  <path d="M19,6V20a2,2,0,0,1-2,2H7a2,2,0,0,1-2-2V6M8,6V4a2,2,0,0,1,2-2h4a2,2,0,0,1,2,2V6"></path>
+                                </svg>
+                              </button>
                             </div>
-                          </div>
+                          ) : (
+                            <button
+                              className="add-to-cart-btn"
+                              onClick={() =>
+                                addToCart(item._id, selectedVariant)
+                              }
+                            >
+                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <line x1="12" y1="5" x2="12" y2="19"></line>
+                                <line x1="5" y1="12" x2="19" y2="12"></line>
+                              </svg>
+                              Add to Cart
+                            </button>
+                          )}
                         </div>
                       </div>
-                    );
-                  })}
-                </div>
-              )}
-            </main>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Floating Cart Button */}
-        <button
-          type="button"
-          className="floating-cart"
-          data-bs-toggle="modal"
-          data-bs-target="#cartModal"
-        >
-          <div className="cart-circle">
-            🛒
-            {totalItems > 0 && <span className="cart-badge">{totalItems}</span>}
-          </div>
-        </button>
-      </div>
+        </div>
 
       {/* Cart Modal (outside menu-page) */}
       <div
@@ -359,13 +339,14 @@ export default function MenuPage() {
                             </button>
                             <button
                               className="remove-btn ms-3"
-                              onClick={() =>
+                              onClick={() => {
                                 setCart((prev) => {
                                   const updated = { ...prev };
                                   delete updated[key];
                                   return updated;
-                                })
-                              }
+                                });
+                                removeFromCart(key);
+                              }}
                             >
                               Remove
                             </button>

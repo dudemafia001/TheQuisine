@@ -3,13 +3,104 @@ import { useEffect, useState } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "./menu.css";
 import { useCart } from "../contexts/CartContext";
+// Simple location detection without complex modal
 
 export default function MenuPage() {
   const [products, setProducts] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState("");
   const [cart, setCart] = useState({});
   const [selectedVariants, setSelectedVariants] = useState({});
+  const [showLocationPrompt, setShowLocationPrompt] = useState(false);
+  const [userLocation, setUserLocation] = useState(null);
+  const [deliveryAvailable, setDeliveryAvailable] = useState(null);
+  const [isLoadingLocation, setIsLoadingLocation] = useState(false);
+  const [locationError, setLocationError] = useState("");
+
+  const DELIVERY_CENTER = { lat: 26.4201563, lng: 80.3600507 };
+  const DELIVERY_RADIUS_KM = 7;
   const { addToCart: addToCartContext, updateQuantity, removeFromCart } = useCart();
+
+  // Simple distance calculation using Haversine formula
+  const calculateDistance = (lat1, lon1, lat2, lon2) => {
+    const R = 6371; // Radius of the Earth in kilometers
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = 
+      Math.sin(dLat/2) * Math.sin(dLat/2) +
+      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+      Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c; // Distance in kilometers
+  };
+
+  // Get current location using GPS
+  const getCurrentLocation = () => {
+    console.log('getCurrentLocation called');
+    
+    if (!navigator.geolocation) {
+      setLocationError("Geolocation is not supported by this browser.");
+      console.log('Geolocation not supported');
+      return;
+    }
+
+    setIsLoadingLocation(true);
+    setLocationError("");
+    console.log('Starting geolocation request...');
+    
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        const distance = calculateDistance(
+          latitude, longitude, 
+          DELIVERY_CENTER.lat, DELIVERY_CENTER.lng
+        );
+        
+        const location = {
+          lat: latitude,
+          lng: longitude,
+          address: `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`,
+          distance: distance.toFixed(2)
+        };
+        
+        const isWithinRadius = distance <= DELIVERY_RADIUS_KM;
+        
+        setUserLocation(location);
+        setDeliveryAvailable(isWithinRadius);
+        setShowLocationPrompt(false);
+        
+        // Save to localStorage
+        localStorage.setItem('userLocation', JSON.stringify({
+          ...location,
+          isWithinDeliveryRadius: isWithinRadius,
+          timestamp: Date.now()
+        }));
+        
+        setIsLoadingLocation(false);
+        console.log('Location detected successfully:', location);
+      },
+      (error) => {
+        console.log('Geolocation error:', error);
+        let errorMessage = "Unable to get your location. ";
+        switch (error.code) {
+          case error.PERMISSION_DENIED:
+            errorMessage += "Please enable location permissions in your browser settings and try again.";
+            break;
+          case error.POSITION_UNAVAILABLE:
+            errorMessage += "Location information unavailable. Please check your GPS settings.";
+            break;
+          case error.TIMEOUT:
+            errorMessage += "Location request timed out. Please try again.";
+            break;
+          default:
+            errorMessage += "Please try again or check your browser settings.";
+        }
+        setLocationError(errorMessage);
+        setIsLoadingLocation(false);
+        console.log('Error message set:', errorMessage);
+      },
+      { timeout: 15000, enableHighAccuracy: true }
+    );
+  };
 
   useEffect(() => {
     // ✅ Load Bootstrap only on client
@@ -33,6 +124,34 @@ export default function MenuPage() {
         }
       })
       .catch((err) => console.error("Fetch error:", err));
+
+    // Check if location is already set in localStorage
+    const savedLocation = localStorage.getItem('userLocation');
+    if (savedLocation) {
+      try {
+        const locationData = JSON.parse(savedLocation);
+        // Check if location is not too old (24 hours)
+        const isRecent = (Date.now() - locationData.timestamp) < 24 * 60 * 60 * 1000;
+        if (isRecent) {
+          setUserLocation({
+            lat: locationData.lat,
+            lng: locationData.lng,
+            address: locationData.address,
+            distance: locationData.distance
+          });
+          setDeliveryAvailable(locationData.isWithinDeliveryRadius);
+        } else {
+          // Location is old, prompt for new location
+          setShowLocationPrompt(true);
+        }
+      } catch (error) {
+        console.error("Error parsing saved location:", error);
+        setShowLocationPrompt(true);
+      }
+    } else {
+      // Show location prompt on first visit
+      setShowLocationPrompt(true);
+    }
   }, []);
 
   const categories = [...new Set(products.map((p) => p.category.trim()))];
@@ -98,6 +217,23 @@ export default function MenuPage() {
 
   const { totalItems, totalPrice } = getCartSummary();
 
+  // Handle change location
+  const handleChangeLocation = () => {
+    console.log('Change location clicked - clearing current location and showing prompt');
+    
+    // Clear current location and show prompt
+    setUserLocation(null);
+    setDeliveryAvailable(null);
+    setLocationError("");
+    setIsLoadingLocation(false);
+    setShowLocationPrompt(true);
+    
+    // Also clear localStorage so user gets fresh location
+    localStorage.removeItem('userLocation');
+    
+    console.log('Location prompt should now be visible');
+  };
+
   return (
     <>
       <div className="menu-page">
@@ -111,6 +247,38 @@ export default function MenuPage() {
             </p>
           </div>
         </section>
+
+        {/* Delivery Status Bar */}
+        {userLocation && (
+          <div className={`delivery-status-bar ${deliveryAvailable ? 'available' : 'unavailable'}`}>
+            <div className="delivery-status-content">
+              <div className="location-info">
+                {deliveryAvailable ? (
+                  <>
+                    <span className="status-icon">🚚</span>
+                    <div className="status-text">
+                      <strong>Delivering to:</strong> {userLocation.address}
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <span className="status-icon">📍</span>
+                    <div className="status-text">
+                      <strong>Delivery unavailable to:</strong> {userLocation.address}
+                      <p>We currently deliver within 7km only</p>
+                    </div>
+                  </>
+                )}
+              </div>
+              <button 
+                className="change-location-btn"
+                onClick={handleChangeLocation}
+              >
+                Change Location
+              </button>
+            </div>
+          </div>
+        )}
 
         <div className="main-container">
           {/* Category Filter */}
@@ -368,6 +536,102 @@ export default function MenuPage() {
           </div>
         </div>
       </div>
+
+      {/* Simple Location Prompt */}
+      {showLocationPrompt && (
+        <div className="location-modal-overlay" style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.7)',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          zIndex: 9999
+        }}>
+          <div className="location-modal" style={{
+            backgroundColor: 'white',
+            borderRadius: '12px',
+            padding: '30px',
+            maxWidth: '400px',
+            width: '90%',
+            textAlign: 'center',
+            boxShadow: '0 10px 30px rgba(0, 0, 0, 0.3)',
+            position: 'relative'
+          }}>
+            {/* Close button */}
+            <button 
+              onClick={() => setShowLocationPrompt(false)}
+              style={{
+                position: 'absolute',
+                top: '10px',
+                right: '15px',
+                background: 'none',
+                border: 'none',
+                fontSize: '24px',
+                color: '#666',
+                cursor: 'pointer',
+                padding: '5px'
+              }}
+            >
+              ×
+            </button>
+            
+            <h3 style={{ marginBottom: '20px', color: '#124f31' }}>
+              📍 Set Your Delivery Location
+            </h3>
+            <p style={{ marginBottom: '20px', color: '#666' }}>
+              We need your location to check if we deliver to your area and calculate delivery charges.
+            </p>
+            
+            {locationError && (
+              <div style={{ 
+                color: '#d32f2f', 
+                backgroundColor: '#ffebee', 
+                padding: '10px', 
+                borderRadius: '8px', 
+                marginBottom: '20px' 
+              }}>
+                ⚠️ {locationError}
+              </div>
+            )}
+
+            <button 
+              className="btn btn-success"
+              onClick={getCurrentLocation}
+              disabled={isLoadingLocation}
+              style={{
+                width: '100%',
+                padding: '12px',
+                fontSize: '16px',
+                marginBottom: '15px'
+              }}
+            >
+              {isLoadingLocation ? "🔄 Getting Location..." : "📍 Use My Current Location"}
+            </button>
+
+            <button 
+              className="btn btn-outline-secondary"
+              onClick={() => setShowLocationPrompt(false)}
+              disabled={isLoadingLocation}
+              style={{
+                width: '100%',
+                padding: '10px',
+                fontSize: '14px',
+                marginBottom: '15px'
+              }}
+            >
+              Skip for now
+            </button>
+            
+            <p style={{ fontSize: '12px', color: '#888', marginTop: '15px' }}>
+              We only use your location to verify delivery availability. Your privacy is protected.
+            </p>
+          </div>
+        </div>
+      )}
     </>
   );
 }

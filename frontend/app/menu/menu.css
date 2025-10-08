@@ -470,3 +470,101 @@
   opacity: 0.7;
   cursor: not-allowed;
 }
+
+/* Delivery Status Bar */
+.delivery-status-bar {
+  padding: 16px 24px;
+  margin: 0;
+  border-bottom: 2px solid;
+}
+
+.delivery-status-bar.available {
+  background: linear-gradient(135deg, #f0fff4 0%, #e6fffa 100%);
+  border-color: #38a169;
+  color: #2f855a;
+}
+
+.delivery-status-bar.unavailable {
+  background: linear-gradient(135deg, #fed7d7 0%, #fbb6ce 100%);
+  border-color: #e53e3e;
+  color: #c53030;
+}
+
+.delivery-status-content {
+  max-width: 1400px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+}
+
+.location-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+}
+
+.status-icon {
+  font-size: 24px;
+  flex-shrink: 0;
+}
+
+.status-text {
+  flex: 1;
+}
+
+.status-text strong {
+  display: block;
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+
+.status-text p {
+  margin: 0;
+  font-size: 14px;
+  opacity: 0.8;
+}
+
+.change-location-btn {
+  background: rgba(255, 255, 255, 0.9);
+  border: 2px solid rgba(0, 0, 0, 0.1);
+  color: inherit;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.change-location-btn:hover {
+  background: rgba(255, 255, 255, 1);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Responsive Design for Delivery Status Bar */
+@media (max-width: 768px) {
+  .delivery-status-content {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+
+  .change-location-btn {
+    width: 100%;
+    text-align: center;
+  }
+
+  .status-text strong {
+    font-size: 15px;
+  }
+
+  .status-text p {
+    font-size: 13px;
+  }
+}

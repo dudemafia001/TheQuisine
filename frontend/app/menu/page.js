@@ -1,24 +1,27 @@
 "use client";
 import { useEffect, useState } from "react";
+import { useRouter, usePathname } from "next/navigation";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "./menu.css";
 import { useCart } from "../contexts/CartContext";
+import { useLocation } from "../contexts/LocationContext";
 // Simple location detection without complex modal
 
 export default function MenuPage() {
+  const router = useRouter();
+  const pathname = usePathname();
   const [products, setProducts] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState("");
-  const [cart, setCart] = useState({});
   const [selectedVariants, setSelectedVariants] = useState({});
   const [showLocationPrompt, setShowLocationPrompt] = useState(false);
-  const [userLocation, setUserLocation] = useState(null);
-  const [deliveryAvailable, setDeliveryAvailable] = useState(null);
   const [isLoadingLocation, setIsLoadingLocation] = useState(false);
   const [locationError, setLocationError] = useState("");
 
   const DELIVERY_CENTER = { lat: 26.4201563, lng: 80.3600507 };
   const DELIVERY_RADIUS_KM = 7;
-  const { addToCart: addToCartContext, updateQuantity, removeFromCart } = useCart();
+  
+  const { addToCart: addToCartContext, updateQuantity, removeFromCart, cartItems, totalItems: cartTotalItems, clearCart, subtotal } = useCart();
+  const { userLocation, deliveryAvailable, setUserLocation, setDeliveryAvailable, clearLocation } = useLocation();
 
   // Simple distance calculation using Haversine formula
   const calculateDistance = (lat1, lon1, lat2, lon2) => {
@@ -59,7 +62,7 @@ export default function MenuPage() {
           lat: latitude,
           lng: longitude,
           address: `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`,
-          distance: distance.toFixed(2)
+          distance: parseFloat(distance.toFixed(2))
         };
         
         const isWithinRadius = distance <= DELIVERY_RADIUS_KM;
@@ -67,16 +70,7 @@ export default function MenuPage() {
         setUserLocation(location);
         setDeliveryAvailable(isWithinRadius);
         setShowLocationPrompt(false);
-        
-        // Save to localStorage
-        localStorage.setItem('userLocation', JSON.stringify({
-          ...location,
-          isWithinDeliveryRadius: isWithinRadius,
-          timestamp: Date.now()
-        }));
-        
         setIsLoadingLocation(false);
-        console.log('Location detected successfully:', location);
       },
       (error) => {
         console.log('Geolocation error:', error);
@@ -125,33 +119,22 @@ export default function MenuPage() {
       })
       .catch((err) => console.error("Fetch error:", err));
 
-    // Check if location is already set in localStorage
-    const savedLocation = localStorage.getItem('userLocation');
-    if (savedLocation) {
-      try {
-        const locationData = JSON.parse(savedLocation);
-        // Check if location is not too old (24 hours)
-        const isRecent = (Date.now() - locationData.timestamp) < 24 * 60 * 60 * 1000;
-        if (isRecent) {
-          setUserLocation({
-            lat: locationData.lat,
-            lng: locationData.lng,
-            address: locationData.address,
-            distance: locationData.distance
-          });
-          setDeliveryAvailable(locationData.isWithinDeliveryRadius);
-        } else {
-          // Location is old, prompt for new location
-          setShowLocationPrompt(true);
-        }
-      } catch (error) {
-        console.error("Error parsing saved location:", error);
-        setShowLocationPrompt(true);
-      }
-    } else {
-      // Show location prompt on first visit
+    // Show location prompt if no location is set
+    if (!userLocation) {
       setShowLocationPrompt(true);
     }
+
+    // Cleanup function to remove modal backdrops when component unmounts
+    return () => {
+      // Remove any lingering modal backdrops
+      const backdrops = document.querySelectorAll('.modal-backdrop');
+      backdrops.forEach(backdrop => backdrop.remove());
+      
+      // Reset body styles that might be set by Bootstrap modal
+      document.body.classList.remove('modal-open');
+      document.body.style.overflow = '';
+      document.body.style.paddingRight = '';
+    };
   }, []);
 
   const categories = [...new Set(products.map((p) => p.category.trim()))];
@@ -164,74 +147,46 @@ export default function MenuPage() {
       )
     : products;
 
+  // Helper function to get quantity for a specific product+variant
+  const getItemQuantity = (productId, variant) => {
+    const key = `${productId}_${variant}`;
+    const item = cartItems.find(item => item.id === key);
+    return item?.quantity || 0;
+  };
+
   const addToCart = (id, variant) => {
     const key = `${id}_${variant}`;
-    setCart((prev) => ({ ...prev, [key]: 1 }));
-    addToCartContext(key);
+    const product = products.find((p) => p._id === id);
+    const variantObj = product?.variants.find((v) => v.type === variant);
+    
+    addToCartContext(key, product?.name, variant, variantObj?.price);
   };
 
   const increaseQty = (id, variant) => {
     const key = `${id}_${variant}`;
-    setCart((prev) => {
-      const newQty = (prev[key] || 1) + 1;
-      updateQuantity(key, newQty);
-      return { ...prev, [key]: newQty };
-    });
+    const product = products.find((p) => p._id === id);
+    const variantObj = product?.variants.find((v) => v.type === variant);
+    
+    addToCartContext(key, product?.name, variant, variantObj?.price);
   };
 
   const decreaseQty = (id, variant) => {
     const key = `${id}_${variant}`;
-    setCart((prev) => {
-      const newQty = (prev[key] || 1) - 1;
-      if (newQty <= 0) {
-        const updated = { ...prev };
-        delete updated[key];
-        removeFromCart(key);
-        return updated;
-      }
-      updateQuantity(key, newQty);
-      return { ...prev, [key]: newQty };
-    });
+    const currentQty = getItemQuantity(id, variant);
+    
+    if (currentQty <= 1) {
+      removeFromCart(key);
+    } else {
+      updateQuantity(key, currentQty - 1);
+    }
   };
-
-  const getCartSummary = () => {
-    let totalItems = 0;
-    let totalPrice = 0;
-
-    Object.entries(cart).forEach(([key, qty]) => {
-      if (qty > 0) {
-        const [id, variant] = key.split("_");
-        const product = products.find((p) => p._id === id);
-        if (product) {
-          const variantObj = product.variants.find((v) => v.type === variant);
-          if (variantObj) {
-            totalItems += qty;
-            totalPrice += qty * variantObj.price;
-          }
-        }
-      }
-    });
-
-    return { totalItems, totalPrice };
-  };
-
-  const { totalItems, totalPrice } = getCartSummary();
 
   // Handle change location
   const handleChangeLocation = () => {
-    console.log('Change location clicked - clearing current location and showing prompt');
-    
-    // Clear current location and show prompt
-    setUserLocation(null);
-    setDeliveryAvailable(null);
+    clearLocation();
     setLocationError("");
     setIsLoadingLocation(false);
     setShowLocationPrompt(true);
-    
-    // Also clear localStorage so user gets fresh location
-    localStorage.removeItem('userLocation');
-    
-    console.log('Location prompt should now be visible');
   };
 
   return (
@@ -340,8 +295,7 @@ export default function MenuPage() {
                     (v) => v.type === selectedVariant
                   )?.price;
 
-                  const cartKey = `${item._id}_${selectedVariant}`;
-                  const qty = cart[cartKey] || 0;
+                  const qty = getItemQuantity(item._id, selectedVariant);
 
                   return (
                     <div key={item._id} className="product-card clean">
@@ -400,12 +354,8 @@ export default function MenuPage() {
                               <button
                                 className="remove-from-cart"
                                 onClick={() => {
-                                  setCart((prev) => {
-                                    const updated = { ...prev };
-                                    delete updated[cartKey];
-                                    return updated;
-                                  });
-                                  removeFromCart(cartKey);
+                                  const key = `${item._id}_${selectedVariant}`;
+                                  removeFromCart(key);
                                 }}
                               >
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -459,86 +409,101 @@ export default function MenuPage() {
               ></button>
             </div>
             <div className="modal-body">
-              {totalItems === 0 ? (
+              {cartTotalItems === 0 ? (
                 <p className="text-muted">Your cart is empty</p>
               ) : (
                 <ul className="list-group">
-                  {Object.entries(cart).map(([key, qty]) => {
-                    if (qty > 0) {
-                      const [id, variant] = key.split("_");
-                      const product = products.find((p) => p._id === id);
-                      if (!product) return null;
-                      const variantObj = product.variants.find(
-                        (v) => v.type === variant
-                      );
-                      return (
-                        <li
-                          key={key}
-                          className="list-group-item d-flex justify-content-between align-items-center"
-                        >
-                          <div>
-                            <strong>{product.name}</strong> ({variant})
-                            <br />
-                            <span className="text-muted">
-                              ₹{variantObj.price}
-                            </span>
-                          </div>
-                          <div className="d-flex align-items-center">
-                            <button
-                              className="btn btn-sm"
-                              style={{
-                                background: "#dd9933",
-                                color: "#fff",
-                              }}
-                              onClick={() => decreaseQty(id, variant)}
-                            >
-                              –
-                            </button>
-                            <span className="mx-2">{qty}</span>
-                            <button
-                              className="btn btn-sm"
-                              style={{
-                                background: "#124f31",
-                                color: "#fff",
-                              }}
-                              onClick={() => increaseQty(id, variant)}
-                            >
-                              +
-                            </button>
-                            <button
-                              className="remove-btn ms-3"
-                              onClick={() => {
-                                setCart((prev) => {
-                                  const updated = { ...prev };
-                                  delete updated[key];
-                                  return updated;
-                                });
-                                removeFromCart(key);
-                              }}
-                            >
-                              Remove
-                            </button>
-                          </div>
-                        </li>
-                      );
-                    }
-                    return null;
+                  {cartItems.map((item) => {
+                    const [id, variant] = item.id.split("_");
+                    const product = products.find((p) => p._id === id);
+                    if (!product) return null;
+                    
+                    return (
+                      <li
+                        key={item.id}
+                        className="list-group-item d-flex justify-content-between align-items-center"
+                      >
+                        <div>
+                          <strong>{item.name || product.name}</strong> ({item.variant || variant})
+                          <br />
+                          <span className="text-muted">
+                            ₹{item.price}
+                          </span>
+                        </div>
+                        <div className="d-flex align-items-center">
+                          <button
+                            className="btn btn-sm"
+                            style={{
+                              background: "#dd9933",
+                              color: "#fff",
+                            }}
+                            onClick={() => decreaseQty(id, variant)}
+                          >
+                            –
+                          </button>
+                          <span className="mx-2">{item.quantity}</span>
+                          <button
+                            className="btn btn-sm"
+                            style={{
+                              background: "#124f31",
+                              color: "#fff",
+                            }}
+                            onClick={() => increaseQty(id, variant)}
+                          >
+                            +
+                          </button>
+                          <button
+                            className="remove-btn ms-3"
+                            onClick={() => removeFromCart(item.id)}
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      </li>
+                    );
                   })}
                 </ul>
               )}
             </div>
-            {totalItems > 0 && (
+            {cartTotalItems > 0 && (
               <div className="modal-footer">
-                <h5 className="me-auto">Total: ₹{totalPrice}</h5>
-                <button className="btn btn-success">Checkout</button>
+                <h5 className="me-auto">Total: ₹{subtotal.toFixed(2)}</h5>
+                <button 
+                  className="btn btn-success"
+                  onClick={() => {
+                    // Close the modal first
+                    const modal = document.getElementById('cartModal');
+                    const modalInstance = window.bootstrap?.Modal?.getInstance(modal);
+                    if (modalInstance) {
+                      modalInstance.hide();
+                    }
+                    
+                    // Ensure complete cleanup of modal backdrop and body styles
+                    setTimeout(() => {
+                      // Remove any lingering modal backdrops
+                      const backdrops = document.querySelectorAll('.modal-backdrop');
+                      backdrops.forEach(backdrop => backdrop.remove());
+                      
+                      // Reset body styles
+                      document.body.classList.remove('modal-open');
+                      document.body.style.overflow = '';
+                      document.body.style.paddingRight = '';
+                      
+                      // Navigate to checkout
+                      router.push('/checkout');
+                    }, 150); // Small delay to ensure modal close animation completes
+                  }}
+                >
+                  Checkout
+                </button>
               </div>
             )}
           </div>
         </div>
       </div>
 
-      {/* Simple Location Prompt */}
-      {showLocationPrompt && (
+      {/* Simple Location Prompt - Only show on menu page */}
+      {showLocationPrompt && pathname === '/menu' && (
         <div className="location-modal-overlay" style={{
           position: 'fixed',
           top: 0,

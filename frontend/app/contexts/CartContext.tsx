@@ -1,15 +1,19 @@
 "use client";
-import { createContext, useContext, useState, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
 interface CartItem {
   id: string;
   quantity: number;
+  name?: string;
+  variant?: string;
+  price?: number;
 }
 
 interface CartContextType {
   cartItems: CartItem[];
   totalItems: number;
-  addToCart: (id: string) => void;
+  subtotal: number;
+  addToCart: (id: string, name?: string, variant?: string, price?: number) => void;
   removeFromCart: (id: string) => void;
   updateQuantity: (id: string, quantity: number) => void;
   clearCart: () => void;
@@ -20,9 +24,30 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 export function CartProvider({ children }: { children: ReactNode }) {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
 
-  const totalItems = cartItems.reduce((sum, item) => sum + item.quantity, 0);
+  // Load cart from localStorage on component mount
+  useEffect(() => {
+    const savedCart = localStorage.getItem('cart');
+    if (savedCart) {
+      try {
+        const parsedCart = JSON.parse(savedCart);
+        setCartItems(parsedCart);
+      } catch (error) {
+        console.error('Error loading cart from localStorage:', error);
+      }
+    }
+  }, []);
 
-  const addToCart = (id: string) => {
+  // Save cart to localStorage whenever cartItems changes
+  useEffect(() => {
+    localStorage.setItem('cart', JSON.stringify(cartItems));
+  }, [cartItems]);
+
+  const totalItems = cartItems.reduce((sum, item) => sum + item.quantity, 0);
+  const subtotal = cartItems.reduce((sum, item) => sum + (item.price || 0) * item.quantity, 0);
+
+
+
+  const addToCart = (id: string, name?: string, variant?: string, price?: number) => {
     setCartItems(prev => {
       const existingItem = prev.find(item => item.id === id);
       if (existingItem) {
@@ -30,7 +55,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
           item.id === id ? { ...item, quantity: item.quantity + 1 } : item
         );
       }
-      return [...prev, { id, quantity: 1 }];
+      return [...prev, { id, quantity: 1, name, variant, price }];
     });
   };
 
@@ -58,6 +83,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     <CartContext.Provider value={{
       cartItems,
       totalItems,
+      subtotal,
       addToCart,
       removeFromCart,
       updateQuantity,

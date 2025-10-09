@@ -6,6 +6,8 @@ import dotenv from "dotenv";
 import authRoutes from "./src/routes/auth.js";
 import productRoutes from "./src/routes/productRoutes.js";
 import couponRoutes from "./src/routes/couponRoutes.js";
+import paymentRoutes from "./src/routes/paymentRoutes.js";
+import orderRoutes from "./src/routes/orderRoutes.js";
 
 dotenv.config();
 
@@ -24,6 +26,8 @@ mongoose
 app.use("/api/auth", authRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/coupons", couponRoutes);
+app.use("/api/payments", paymentRoutes);
+app.use("/api/orders", orderRoutes);
 
 app.get("/", (req, res) => {
   res.send("API is running...");

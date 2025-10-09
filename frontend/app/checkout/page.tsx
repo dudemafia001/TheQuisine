@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useCart } from '../contexts/CartContext';
 import { useLocation } from '../contexts/LocationContext';
+import { useAuth } from '../contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import './checkout.css';
 
@@ -25,6 +26,7 @@ export default function CheckoutPage() {
   const router = useRouter();
   const { cartItems, subtotal, updateQuantity, removeFromCart } = useCart();
   const { userLocation } = useLocation();
+  const { user } = useAuth();
   
   const [customerInfo, setCustomerInfo] = useState({
     fullName: 'Ambuj Dwivedi',
@@ -141,6 +143,10 @@ export default function CheckoutPage() {
   // No automatic redirect - let user choose to add items
 
   const [paymentMethod, setPaymentMethod] = useState('online');
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+
+  // Payment validation constants
+  const minimumCashAmount = 499;
 
   // Load checkout data from localStorage on component mount
   useEffect(() => {
@@ -184,6 +190,164 @@ export default function CheckoutPage() {
   const packagingCharge = 67.5;
   
   const finalTotal = subtotal + packagingCharge - couponDiscount;
+  
+  // Payment validation
+  const isEligibleForCash = finalTotal >= minimumCashAmount;
+
+  // Auto-switch to online payment if cash is not eligible and currently selected
+  useEffect(() => {
+    if (paymentMethod === 'cash' && !isEligibleForCash) {
+      setPaymentMethod('online');
+    }
+  }, [paymentMethod, isEligibleForCash]);
+
+  // Razorpay payment processing
+  const processOnlinePayment = async () => {
+    try {
+      setIsProcessingPayment(true);
+
+      // Create order on backend
+      const orderResponse = await fetch('http://localhost:5001/api/payments/create-order', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          amount: finalTotal,
+          currency: 'INR',
+          receipt: `order_${Date.now()}`
+        })
+      });
+
+      const orderData = await orderResponse.json();
+
+      if (!orderData.success) {
+        throw new Error(orderData.message || 'Failed to create order');
+      }
+
+      // Razorpay options
+      const options = {
+        key: orderData.key_id,
+        amount: orderData.order.amount,
+        currency: orderData.order.currency,
+        name: 'The Quisine',
+        description: 'Food Order Payment',
+        order_id: orderData.order.id,
+        handler: async (response: any) => {
+          try {
+            // Verify payment on backend
+            const verifyResponse = await fetch('http://localhost:5001/api/payments/verify', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+                orderDetails: {
+                  userId: user,
+                  cartItems,
+                  customerInfo,
+                  deliveryAddress,
+                  subtotal,
+                  packagingCharge,
+                  couponDiscount,
+                  finalTotal,
+                  appliedCoupon
+                }
+              })
+            });
+
+            const verifyData = await verifyResponse.json();
+
+            if (verifyData.success) {
+              // Payment successful - redirect to success page
+              router.push('/checkout/success');
+            } else {
+              alert('Payment verification failed. Please contact support.');
+            }
+          } catch (error) {
+            console.error('Payment verification error:', error);
+            alert('Payment verification failed. Please contact support.');
+          }
+        },
+        prefill: {
+          name: customerInfo.fullName,
+          email: customerInfo.email,
+          contact: customerInfo.phone
+        },
+        theme: {
+          color: '#F37254'
+        }
+      };
+
+      // Load Razorpay and open payment modal
+      const rzp = new (window as any).Razorpay(options);
+      rzp.open();
+
+    } catch (error) {
+      console.error('Payment processing error:', error);
+      alert('Payment processing failed. Please try again.');
+    } finally {
+      setIsProcessingPayment(false);
+    }
+  };
+
+  // Cash payment processing
+  const processCashPayment = async () => {
+    try {
+      setIsProcessingPayment(true);
+
+      const response = await fetch('http://localhost:5001/api/payments/cash', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          amount: finalTotal,
+          orderDetails: {
+            userId: user,
+            cartItems,
+            customerInfo,
+            deliveryAddress,
+            subtotal,
+            packagingCharge,
+            couponDiscount,
+            finalTotal,
+            appliedCoupon
+          }
+        })
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        // Cash order successful - redirect to success page
+        router.push('/checkout/success');
+      } else {
+        alert(result.message || 'Failed to place cash order');
+      }
+    } catch (error) {
+      console.error('Cash payment error:', error);
+      alert('Failed to place order. Please try again.');
+    } finally {
+      setIsProcessingPayment(false);
+    }
+  };
+
+  // Handle place order
+  const handlePlaceOrder = () => {
+    if (paymentMethod === 'online') {
+      processOnlinePayment();
+    } else if (paymentMethod === 'cash') {
+      if (!isEligibleForCash) {
+        alert(`Minimum order amount for cash payment is ₹${minimumCashAmount}`);
+        return;
+      }
+      processCashPayment();
+    }
+  };
 
   if (isLoading) {
     return (
@@ -284,17 +448,31 @@ export default function CheckoutPage() {
           <div className="checkout-section">
             <h2 className="section-title">Payments</h2>
             <div className="payment-methods">
-              <div className={`payment-option ${paymentMethod === 'online' ? 'selected' : ''}`}>
+              <div 
+                className={`payment-option ${paymentMethod === 'online' ? 'selected' : ''}`}
+                onClick={() => setPaymentMethod('online')}
+                style={{ cursor: 'pointer' }}
+              >
                 <div className="payment-icon">📱</div>
                 <div className="payment-details">
                   <div className="payment-name">Pay Online</div>
+                  <div className="payment-desc">UPI, Cards, Netbanking, Wallets</div>
                 </div>
               </div>
-              <div className={`payment-option ${paymentMethod === 'cash' ? 'selected' : ''}`}>
+              <div 
+                className={`payment-option ${paymentMethod === 'cash' ? 'selected' : ''} ${!isEligibleForCash ? 'disabled' : ''}`}
+                onClick={() => isEligibleForCash && setPaymentMethod('cash')}
+                style={{ cursor: isEligibleForCash ? 'pointer' : 'not-allowed' }}
+              >
                 <div className="payment-icon">💵</div>
                 <div className="payment-details">
-                  <div className="payment-name">Cash</div>
-                  <div className="payment-limit">Max limit is ₹599.00</div>
+                  <div className="payment-name">Cash on Delivery</div>
+                  <div className={`payment-limit ${!isEligibleForCash ? 'error' : ''}`}>
+                    {!isEligibleForCash ? 
+                      `Minimum ₹${minimumCashAmount} required` : 
+                      `Available for orders ₹${minimumCashAmount}+`
+                    }
+                  </div>
                 </div>
               </div>
             </div>
@@ -378,11 +556,13 @@ export default function CheckoutPage() {
             {/* Proceed to Pay */}
             <button 
               className="proceed-btn"
-              onClick={() => {
-                console.log('Order placed successfully!');
-              }}
+              onClick={handlePlaceOrder}
+              disabled={isProcessingPayment || (paymentMethod === 'cash' && !isEligibleForCash)}
             >
-              Place Order - ₹{finalTotal.toFixed(2)}
+              {isProcessingPayment ? 
+                'Processing...' : 
+                `${paymentMethod === 'online' ? 'Pay Online' : 'Place Order'} - ₹${finalTotal.toFixed(2)}`
+              }
             </button>
 
             {/* Special Request */}

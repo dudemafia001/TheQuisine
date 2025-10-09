@@ -267,6 +267,16 @@ html, body {
   background: #fdf8f0;
 }
 
+.payment-option.disabled {
+  opacity: 0.6;
+  background: #f7fafc;
+  border-color: #e2e8f0;
+}
+
+.payment-option.disabled:hover {
+  border-color: #e2e8f0;
+}
+
 .payment-icon {
   font-size: 24px;
   margin-bottom: 8px;
@@ -279,9 +289,20 @@ html, body {
   margin-bottom: 4px;
 }
 
+.payment-desc {
+  font-size: 11px;
+  color: #a0aec0;
+  margin-bottom: 4px;
+}
+
 .payment-limit {
   font-size: 12px;
   color: #718096;
+}
+
+.payment-limit.error {
+  color: #e53e3e;
+  font-weight: 600;
 }
 
 /* Right Column - Cart Summary */

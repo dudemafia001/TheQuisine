@@ -1,5 +1,5 @@
 "use client";
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 
 interface CartItem {
   id: string;
@@ -47,7 +47,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
 
 
-  const addToCart = (id: string, name?: string, variant?: string, price?: number) => {
+  const addToCart = useCallback((id: string, name?: string, variant?: string, price?: number) => {
     setCartItems(prev => {
       const existingItem = prev.find(item => item.id === id);
       if (existingItem) {
@@ -57,13 +57,13 @@ export function CartProvider({ children }: { children: ReactNode }) {
       }
       return [...prev, { id, quantity: 1, name, variant, price }];
     });
-  };
+  }, []);
 
-  const removeFromCart = (id: string) => {
+  const removeFromCart = useCallback((id: string) => {
     setCartItems(prev => prev.filter(item => item.id !== id));
-  };
+  }, []);
 
-  const updateQuantity = (id: string, quantity: number) => {
+  const updateQuantity = useCallback((id: string, quantity: number) => {
     if (quantity <= 0) {
       removeFromCart(id);
       return;
@@ -73,11 +73,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
         item.id === id ? { ...item, quantity } : item
       )
     );
-  };
+  }, [removeFromCart]);
 
-  const clearCart = () => {
+  const clearCart = useCallback(() => {
     setCartItems([]);
-  };
+  }, []);
 
   return (
     <CartContext.Provider value={{

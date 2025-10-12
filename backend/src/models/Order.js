@@ -11,6 +11,7 @@ const orderItemSchema = new mongoose.Schema({
 
 const orderSchema = new mongoose.Schema({
   orderId: { type: String, required: true, unique: true },
+  orderNumber: { type: String, unique: true, sparse: true }, // Optional field for legacy compatibility
   userId: { type: String, required: true }, // Username from auth
   customerInfo: {
     name: { type: String, required: true },

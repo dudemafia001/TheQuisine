@@ -18,7 +18,7 @@ export default function CheckoutSuccessPage() {
         <div className="success-icon">✅</div>
         <h1 className="success-title">Order Placed Successfully!</h1>
         <p className="success-message">
-          Thank you for your order. We'll prepare your delicious food and deliver it to you soon.
+          Thank you for your order. We&apos;ll prepare your delicious food and deliver it to you soon.
         </p>
         
         <div className="success-details">
@@ -28,7 +28,7 @@ export default function CheckoutSuccessPage() {
           </div>
           <div className="detail-item">
             <span className="detail-label">📱 Order Updates:</span>
-            <span className="detail-value">You'll receive SMS updates</span>
+            <span className="detail-value">You&apos;ll receive SMS updates</span>
           </div>
         </div>
 

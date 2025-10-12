@@ -40,7 +40,6 @@ export default function CheckoutPage() {
   });
   
   const [manualAddress, setManualAddress] = useState('');
-  const [isAddressRequired, setIsAddressRequired] = useState(false);
   const [deliveryDate, setDeliveryDate] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   
@@ -58,7 +57,6 @@ export default function CheckoutPage() {
         type: 'Home',
         address: userLocation.address
       });
-      setIsAddressRequired(false);
     }
   }, [userLocation]);
 
@@ -187,7 +185,7 @@ export default function CheckoutPage() {
   }, [manualAddress]);
 
   // Calculate values
-  const packagingCharge = 67.5;
+  const packagingCharge = 20;
   
   const finalTotal = subtotal + packagingCharge - couponDiscount;
   
@@ -233,7 +231,7 @@ export default function CheckoutPage() {
         name: 'The Quisine',
         description: 'Food Order Payment',
         order_id: orderData.order.id,
-        handler: async (response: any) => {
+        handler: async (response: { razorpay_payment_id: string; razorpay_order_id: string; razorpay_signature: string }) => {
           try {
             // Verify payment on backend
             const verifyResponse = await fetch('http://localhost:5001/api/payments/verify', {
@@ -283,6 +281,7 @@ export default function CheckoutPage() {
       };
 
       // Load Razorpay and open payment modal
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const rzp = new (window as any).Razorpay(options);
       rzp.open();
 
@@ -375,7 +374,7 @@ export default function CheckoutPage() {
             <div className="empty-cart-icon">🛒</div>
             <h2 className="empty-cart-title">Your Cart is Empty</h2>
             <p className="empty-cart-message">
-              Looks like you haven't added any delicious items to your cart yet!
+              Looks like you haven&apos;t added any delicious items to your cart yet!
             </p>
             <button 
               className="add-items-btn"

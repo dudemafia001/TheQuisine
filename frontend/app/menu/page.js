@@ -20,7 +20,7 @@ export default function MenuPage() {
   const DELIVERY_CENTER = { lat: 26.4201563, lng: 80.3600507 };
   const DELIVERY_RADIUS_KM = 7;
   
-  const { addToCart: addToCartContext, updateQuantity, removeFromCart, cartItems, totalItems: cartTotalItems, clearCart, subtotal } = useCart();
+  const { addToCart: addToCartContext, updateQuantity, removeFromCart, cartItems, totalItems: cartTotalItems, subtotal } = useCart();
   const { userLocation, deliveryAvailable, setUserLocation, setDeliveryAvailable, clearLocation } = useLocation();
 
   // Simple distance calculation using Haversine formula

@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import { useRouter } from "next/navigation";
+import "./orders.css";
 
 export default function OrdersPage() {
   const { isAuthenticated, user } = useAuth();
@@ -9,6 +10,46 @@ export default function OrdersPage() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [showTracking, setShowTracking] = useState({});
+
+  // Toggle tracking view for specific order
+  const toggleTrackingView = (orderId) => {
+    setShowTracking(prev => ({
+      ...prev,
+      [orderId]: !prev[orderId]
+    }));
+  };
+
+  // Get tracking stages based on current order status
+  const getTrackingStages = (currentStatus) => {
+    const stages = [
+      {
+        title: "Order Placed",
+        description: "Your order has been received and confirmed",
+        status: "completed" // Always completed since we have the order
+      },
+      {
+        title: "Send to Cooking",
+        description: "Your order is being prepared in the kitchen",
+        status: currentStatus === 'placed' ? 'pending' : 
+                currentStatus === 'preparing' ? 'current' : 'completed'
+      },
+      {
+        title: "Out for Delivery",
+        description: "Your order is on the way to your location",
+        status: (currentStatus === 'placed' || currentStatus === 'preparing') ? 'pending' :
+                currentStatus === 'out_for_delivery' ? 'current' : 'completed'
+      },
+      {
+        title: "Delivered",
+        description: "Your order has been delivered successfully",
+        status: currentStatus === 'delivered' ? 'completed' : 
+                currentStatus === 'cancelled' ? 'cancelled' : 'pending'
+      }
+    ];
+
+    return stages;
+  };
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -99,7 +140,7 @@ export default function OrdersPage() {
             <div className="card">
               <div className="card-body text-center">
                 <h5>No orders found</h5>
-                <p className="text-muted">You haven't placed any orders yet.</p>
+                <p className="text-muted">You haven&apos;t placed any orders yet.</p>
                 <a href="/menu" className="btn btn-primary">Start Shopping</a>
               </div>
             </div>
@@ -166,13 +207,10 @@ export default function OrdersPage() {
                     </div>
                     <div className="card-footer">
                       <button 
-                        className="btn btn-outline-primary btn-sm"
-                        onClick={() => {
-                          // You can implement order detail view here
-                          alert(`Order details for ${order.orderId}`);
-                        }}
+                        className="btn btn-outline-success btn-sm"
+                        onClick={() => toggleTrackingView(order.orderId)}
                       >
-                        View Details
+                        📦 Track Order
                       </button>
                       
                       {order.orderStatus === 'placed' && order.paymentInfo.method === 'cash' && (
@@ -187,6 +225,35 @@ export default function OrdersPage() {
                         >
                           Cancel Order
                         </button>
+                      )}
+                      
+                      {/* Order Tracking Section */}
+                      {showTracking[order.orderId] && (
+                        <div className="mt-3 p-3 border-top">
+                          <h6 className="mb-3">📍 Order Tracking</h6>
+                          <div className="tracking-progress">
+                            {getTrackingStages(order.orderStatus).map((stage, index) => (
+                              <div key={index} className={`tracking-stage ${stage.status}`}>
+                                <div className="stage-indicator">
+                                  <div className={`stage-circle ${stage.status}`}>
+                                    {stage.status === 'completed' ? '✓' : 
+                                     stage.status === 'current' ? '●' : '○'}
+                                  </div>
+                                  {index < 3 && <div className={`stage-line ${stage.status}`}></div>}
+                                </div>
+                                <div className="stage-content">
+                                  <div className={`stage-title ${stage.status}`}>{stage.title}</div>
+                                  <div className="stage-description">{stage.description}</div>
+                                  {stage.status === 'completed' && stage.timestamp && (
+                                    <div className="stage-time">
+                                      {new Date(stage.timestamp).toLocaleString()}
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
                       )}
                     </div>
                   </div>

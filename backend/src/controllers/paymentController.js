@@ -127,18 +127,23 @@ export const verifyPayment = async (req, res) => {
           
           const newOrder = new Order({
             orderId,
+            orderNumber: orderId, // Set orderNumber to avoid null index conflicts
             userId: orderDetails.userId || 'guest',
             customerInfo: {
               name: orderDetails.customerInfo.fullName,
               phone: orderDetails.customerInfo.phone,
               email: orderDetails.customerInfo.email
             },
-            deliveryAddress: orderDetails.deliveryAddress,
+            deliveryAddress: {
+              address: orderDetails.deliveryAddress?.address || 'No address provided',
+              lat: orderDetails.deliveryAddress?.lat,
+              lng: orderDetails.deliveryAddress?.lng
+            },
             items: orderItems,
             pricing: {
               subtotal: orderDetails.subtotal,
-              packagingCharge: orderDetails.packagingCharge,
-              couponDiscount: orderDetails.couponDiscount,
+              packagingCharge: orderDetails.packagingCharge || 0,
+              couponDiscount: orderDetails.couponDiscount || 0,
               finalTotal: orderDetails.finalTotal
             },
             paymentInfo: {
@@ -147,7 +152,10 @@ export const verifyPayment = async (req, res) => {
               orderId: razorpay_order_id,
               status: 'paid'
             },
-            appliedCoupon: orderDetails.appliedCoupon || {}
+            appliedCoupon: orderDetails.appliedCoupon ? {
+              code: orderDetails.appliedCoupon.code,
+              discount: orderDetails.appliedCoupon.discount_value || 0
+            } : {}
           });
 
           console.log('💾 Saving order to database...');
@@ -229,25 +237,33 @@ export const processCashPayment = async (req, res) => {
       
       const newOrder = new Order({
         orderId,
+        orderNumber: orderId, // Set orderNumber to avoid null index conflicts
         userId: orderDetails.userId || 'guest',
         customerInfo: {
           name: orderDetails.customerInfo.fullName,
           phone: orderDetails.customerInfo.phone,
           email: orderDetails.customerInfo.email
         },
-        deliveryAddress: orderDetails.deliveryAddress,
+        deliveryAddress: {
+          address: orderDetails.deliveryAddress?.address || 'No address provided',
+          lat: orderDetails.deliveryAddress?.lat,
+          lng: orderDetails.deliveryAddress?.lng
+        },
         items: orderItems,
         pricing: {
           subtotal: orderDetails.subtotal,
-          packagingCharge: orderDetails.packagingCharge,
-          couponDiscount: orderDetails.couponDiscount,
+          packagingCharge: orderDetails.packagingCharge || 0,
+          couponDiscount: orderDetails.couponDiscount || 0,
           finalTotal: orderDetails.finalTotal
         },
         paymentInfo: {
           method: 'cash',
           status: 'pending'
         },
-        appliedCoupon: orderDetails.appliedCoupon || {}
+        appliedCoupon: orderDetails.appliedCoupon ? {
+          code: orderDetails.appliedCoupon.code,
+          discount: orderDetails.appliedCoupon.discount_value || 0
+        } : {}
       });
 
       const savedOrder = await newOrder.save();

@@ -7,7 +7,8 @@ import "./components/Header.css";
 import { AuthProvider } from "./contexts/AuthContext";
 import { CartProvider } from "./contexts/CartContext";
 import { LocationProvider } from "./contexts/LocationContext";
-import Header from "./components/Header";
+import { AdminProvider } from "./contexts/AdminContext";
+import ConditionalHeader from "./components/ConditionalHeader";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -40,12 +41,14 @@ export default function RootLayout({
           strategy="beforeInteractive"
         />
         <AuthProvider>
-          <CartProvider>
-            <LocationProvider>
-              <Header />
-              {children}
-            </LocationProvider>
-          </CartProvider>
+          <AdminProvider>
+            <CartProvider>
+              <LocationProvider>
+                <ConditionalHeader />
+                {children}
+              </LocationProvider>
+            </CartProvider>
+          </AdminProvider>
         </AuthProvider>
       </body>
     </html>

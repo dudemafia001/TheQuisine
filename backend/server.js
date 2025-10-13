@@ -8,11 +8,12 @@ import productRoutes from "./src/routes/productRoutes.js";
 import couponRoutes from "./src/routes/couponRoutes.js";
 import paymentRoutes from "./src/routes/paymentRoutes.js";
 import orderRoutes from "./src/routes/orderRoutes.js";
+import adminRoutes from "./src/routes/adminRoutes.js";
 
 dotenv.config();
 
 const app = express();
-app.use(cors({ origin: "http://localhost:3000" }));
+app.use(cors({ origin: ["http://localhost:3000", "http://localhost:3001"] }));
 
 app.use(express.json());
 
@@ -28,6 +29,7 @@ app.use("/api/products", productRoutes);
 app.use("/api/coupons", couponRoutes);
 app.use("/api/payments", paymentRoutes);
 app.use("/api/orders", orderRoutes);
+app.use("/api/admin", adminRoutes);
 
 app.get("/", (req, res) => {
   res.send("API is running...");

@@ -141,7 +141,7 @@ export default function OrdersPage() {
               <div className="card-body text-center">
                 <h5>No orders found</h5>
                 <p className="text-muted">You haven&apos;t placed any orders yet.</p>
-                <a href="/menu" className="btn btn-primary">Start Shopping</a>
+                <a href="/" className="btn btn-primary">Start Shopping</a>
               </div>
             </div>
           ) : (

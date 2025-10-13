@@ -70,7 +70,7 @@ export default function Header() {
 
         {/* Desktop Navigation */}
         <nav className="header-nav desktop-nav">
-          <Link href="/menu" className="nav-item">Menu</Link>
+          <Link href="/" className="nav-item">Menu</Link>
           <Link href="/about" className="nav-item">About Us</Link>
           <Link href="/services" className="nav-item">Service</Link>
           <Link href="/contact" className="nav-item">Contact</Link>
@@ -121,7 +121,7 @@ export default function Header() {
 
           {/* Cart Icon - Only render cart button when mounted and check pathname */}
           {isMounted ? (
-            pathname === '/menu' ? (
+            pathname === '/' ? (
               <button 
                 className="header-icon-btn cart-btn"
                 data-bs-toggle="modal"
@@ -135,7 +135,7 @@ export default function Header() {
                 {totalItems > 0 && <span className="cart-badge">{totalItems}</span>}
               </button>
             ) : (
-              <Link href="/menu" className="header-icon-btn cart-btn">
+              <Link href="/" className="header-icon-btn cart-btn">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                   <circle cx="9" cy="21" r="1"></circle>
                   <circle cx="20" cy="21" r="1"></circle>
@@ -193,7 +193,7 @@ export default function Header() {
             </div>
             <div className="mobile-menu-content">
               <nav className="mobile-nav">
-                <Link href="/menu" className="mobile-nav-item" onClick={closeMobileMenu}>
+                <Link href="/" className="mobile-nav-item" onClick={closeMobileMenu}>
                   Menu
                 </Link>
                 <Link href="/about" className="mobile-nav-item" onClick={closeMobileMenu}>

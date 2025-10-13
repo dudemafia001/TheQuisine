@@ -50,7 +50,7 @@ export default function AnnouncementBar() {
                 className="announcement-logo"
               />
             </Link>
-            <Link href="/menu" className="nav-link announcement-link">
+            <Link href="/" className="nav-link announcement-link">
               Menu
             </Link>
             <Link href="/about" className="nav-link announcement-link">

@@ -115,7 +115,7 @@ export default function CheckoutPage() {
 
   // Change location function
   const handleChangeLocation = () => {
-    router.push('/menu');
+    router.push('/');
   };
 
   // Set delivery date on client side to avoid hydration mismatch
@@ -378,7 +378,7 @@ export default function CheckoutPage() {
             </p>
             <button 
               className="add-items-btn"
-              onClick={() => router.push('/menu')}
+              onClick={() => router.push('/')}
             >
               🍽️ Browse Menu & Add Items
             </button>
@@ -486,7 +486,7 @@ export default function CheckoutPage() {
               <h3>My Cart ({cartItems.reduce((sum, item) => sum + item.quantity, 0)} items)</h3>
               <button 
                 className="edit-cart-btn"
-                onClick={() => router.push('/menu')}
+                onClick={() => router.push('/')}
               >
                 ✏️
               </button>

@@ -35,7 +35,7 @@ export default function CheckoutSuccessPage() {
         <div className="success-actions">
           <button 
             className="continue-shopping-btn"
-            onClick={() => router.push('/menu')}
+            onClick={() => router.push('/')}
           >
             Continue Shopping
           </button>

@@ -14,7 +14,7 @@ export default function AuthPage() {
 
   useEffect(() => {
     if (isAuthenticated) {
-      router.push("/menu");
+      router.push("/");
     }
   }, [isAuthenticated, router]);
 
@@ -35,7 +35,7 @@ export default function AuthPage() {
         setMessage(data.message);
 
         setTimeout(() => {
-          router.push("/menu");
+          router.push("/");
         }, 800);
       } else {
         setMessage(data.message || "Login failed");

@@ -45,7 +45,7 @@ const orderSchema = new mongoose.Schema({
     enum: ['placed', 'confirmed', 'preparing', 'out_for_delivery', 'delivered', 'cancelled'], 
     default: 'placed' 
   },
-  estimatedDeliveryTime: { type: String, default: '30-45 minutes' },
+  estimatedDeliveryTime: { type: String, default: '55-70 minutes' },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now }
 });

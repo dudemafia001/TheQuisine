@@ -5,6 +5,39 @@ html, body {
   height: auto;
 }
 
+/* Global input field styling - consistent across all forms */
+* input[type="text"],
+* input[type="email"], 
+* input[type="tel"],
+* input[type="password"],
+* textarea {
+  padding: 12px !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 8px !important;
+  font-size: 14px !important;
+  color: #4a5568 !important;
+  background: #f9f9f9 !important;
+  box-sizing: border-box !important;
+}
+
+* input[type="text"]::placeholder,
+* input[type="email"]::placeholder,
+* input[type="tel"]::placeholder, 
+* input[type="password"]::placeholder,
+* textarea::placeholder {
+  color: #a0aec0 !important;
+}
+
+* input[type="text"]:focus,
+* input[type="email"]:focus,
+* input[type="tel"]:focus,
+* input[type="password"]:focus,
+* textarea:focus {
+  outline: none !important;
+  border-color: #dd9933 !important;
+  box-shadow: 0 0 0 3px rgba(221, 153, 51, 0.1) !important;
+}
+
 /* Checkout Page Styles */
 .checkout-container {
   min-height: calc(100vh - 120px);
@@ -226,6 +259,42 @@ html, body {
   font-size: 14px;
   color: #4a5568;
   line-height: 1.5;
+}
+
+/* Location Selection Prompt */
+.select-location-prompt {
+  text-align: center;
+  padding: 20px;
+}
+
+.select-location-btn {
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  color: white;
+  border: none;
+  padding: 14px 28px;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  margin-bottom: 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.select-location-btn:hover {
+  background: linear-gradient(135deg, #2563eb, #1e40af);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
+}
+
+.location-help-text {
+  margin: 0;
+  color: #6b7280;
+  font-size: 14px;
+  font-style: italic;
 }
 
 /* Delivery Date */
@@ -736,15 +805,23 @@ html, body {
 
 .coupon-input {
   flex: 1;
-  border: none;
-  background: transparent;
+  border: 1px solid #e2e8f0 !important;
+  background: #f9f9f9 !important;
   font-size: 14px;
   color: #4a5568;
   outline: none;
+  padding: 12px !important;
+  border-radius: 8px !important;
 }
 
 .coupon-input::placeholder {
-  color: #a0aec0;
+  color: #a0aec0 !important;
+}
+
+.coupon-input:focus {
+  outline: none !important;
+  border-color: #dd9933 !important;
+  box-shadow: 0 0 0 3px rgba(221, 153, 51, 0.1) !important;
 }
 
 .apply-coupon-btn {
@@ -947,5 +1024,251 @@ html, body {
   
   .payment-methods {
     flex-direction: column;
+  }
+}
+
+/* Address Details Form Styles */
+.address-details-form {
+  margin-top: 20px;
+  padding: 20px;
+  background: #f8f9fa;
+  border-radius: 12px;
+  border: 2px dashed #dee2e6;
+  transition: all 0.3s ease;
+}
+
+.address-details-form.address-saved {
+  background: linear-gradient(135deg, #e8f5e8, #f0f8f0);
+  border: 2px solid #28a745;
+  box-shadow: 0 4px 15px rgba(40, 167, 69, 0.1);
+}
+
+.form-subtitle {
+  font-size: 16px;
+  font-weight: 600;
+  color: #495057;
+  margin: 0 0 16px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.form-subtitle:before {
+  content: "📝";
+  font-size: 18px;
+}
+
+.address-inputs {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.input-row {
+  display: flex;
+  gap: 12px;
+}
+
+.input-group {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.input-group.full-width {
+  flex: 1;
+}
+
+.input-group label {
+  font-size: 13px;
+  font-weight: 500;
+  color: #495057;
+  margin-bottom: 4px;
+  display: block;
+}
+
+.address-input,
+.address-textarea {
+  width: 100% !important;
+  padding: 12px !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 8px !important;
+  font-size: 14px !important;
+  color: #4a5568 !important;
+  background: #f9f9f9 !important;
+  box-sizing: border-box !important;
+}
+
+.address-input::placeholder,
+.address-textarea::placeholder {
+  color: #a0aec0 !important;
+}
+
+.address-input:focus,
+.address-textarea:focus {
+  outline: none !important;
+  border-color: #dd9933 !important;
+  box-shadow: 0 0 0 3px rgba(221, 153, 51, 0.1) !important;
+}
+
+.address-textarea {
+  resize: vertical;
+  min-height: 80px;
+  font-family: inherit;
+}
+
+/* Universal input styling - applies to all input fields */
+input[type="text"],
+input[type="email"], 
+input[type="tel"],
+input[type="password"],
+textarea {
+  padding: 12px !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 8px !important;
+  font-size: 14px !important;
+  color: #4a5568 !important;
+  background: #f9f9f9 !important;
+  box-sizing: border-box !important;
+}
+
+input[type="text"]::placeholder,
+input[type="email"]::placeholder,
+input[type="tel"]::placeholder, 
+input[type="password"]::placeholder,
+textarea::placeholder {
+  color: #a0aec0 !important;
+}
+
+input[type="text"]:focus,
+input[type="email"]:focus,
+input[type="tel"]:focus,
+input[type="password"]:focus,
+textarea:focus {
+  outline: none !important;
+  border-color: #dd9933 !important;
+  box-shadow: 0 0 0 3px rgba(221, 153, 51, 0.1) !important;
+}
+
+/* More specific selector for address inputs */
+.address-details-form .address-input,
+.address-details-form .address-textarea,
+.address-inputs .address-input,
+.address-inputs .address-textarea {
+  width: 100% !important;
+  padding: 12px !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 8px !important;
+  font-size: 14px !important;
+  color: #4a5568 !important;
+  background: #f9f9f9 !important;
+  box-sizing: border-box !important;
+}
+
+.address-details-form .address-input::placeholder,
+.address-details-form .address-textarea::placeholder,
+.address-inputs .address-input::placeholder,
+.address-inputs .address-textarea::placeholder {
+  color: #a0aec0 !important;
+}
+
+.address-details-form .address-input:focus,
+.address-details-form .address-textarea:focus,
+.address-inputs .address-input:focus,
+.address-inputs .address-textarea:focus {
+  outline: none !important;
+  border-color: #dd9933 !important;
+  box-shadow: 0 0 0 3px rgba(221, 153, 51, 0.1) !important;
+}
+
+/* Address Save Section */
+.address-save-section {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 2px solid #dee2e6;
+  text-align: center;
+}
+
+.save-address-btn {
+  padding: 14px 32px;
+  font-size: 16px;
+  font-weight: 600;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 200px;
+  justify-content: center;
+}
+
+.save-address-btn:not(.saved) {
+  background: linear-gradient(135deg, #28a745, #20c997);
+  color: white;
+  box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+}
+
+.save-address-btn:not(.saved):hover {
+  background: linear-gradient(135deg, #218838, #1ea085);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(40, 167, 69, 0.4);
+}
+
+.save-address-btn.saved {
+  background: linear-gradient(135deg, #6c757d, #868e96);
+  color: white;
+  cursor: not-allowed;
+  opacity: 0.8;
+}
+
+.save-note {
+  margin-top: 12px;
+  font-size: 14px;
+  color: #dc3545;
+  font-weight: 500;
+  font-style: italic;
+}
+
+/* Required field indicator */
+.input-group label:after {
+  content: "";
+}
+
+.input-group label[for="houseNumber"]:after,
+.input-group label[for="street"]:after {
+  content: " *";
+  color: #dc3545;
+  font-weight: bold;
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+  .input-row {
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .address-details-form {
+    padding: 16px;
+    margin-top: 16px;
+  }
+  
+  .address-input,
+  .address-textarea {
+    padding: 12px;
+    font-size: 16px; /* Prevents zoom on iOS */
+  }
+  
+  .save-address-btn {
+    padding: 12px 24px;
+    font-size: 15px;
+    min-width: auto;
+    width: 100%;
+  }
+  
+  .save-note {
+    font-size: 13px;
   }
 }

@@ -39,10 +39,15 @@ export default function LocationModal({ isOpen, onClose, onLocationSet }) {
         const element = response.rows[0].elements[0];
         const distanceInKm = element.distance.value / 1000; // Convert meters to km
         const durationText = element.duration.text;
+        const durationMinutes = Math.round(element.duration.value / 60);
+        
+        // Add 25 minutes for food preparation time
+        const totalDurationMinutes = durationMinutes + 25;
+        const totalDurationText = `${totalDurationMinutes} mins (${durationText} drive + 25 mins prep)`;
         
         callback({
           distance: distanceInKm.toFixed(2),
-          duration: durationText,
+          duration: totalDurationText,
           available: distanceInKm <= DELIVERY_RADIUS_KM
         });
       } else {

@@ -5,6 +5,8 @@ import { useLocation } from '../contexts/LocationContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import './checkout.css';
+import ZomatoLocationModal from '../components/ZomatoLocationModal';
+import '../components/ZomatoLocationModal.css';
 
 interface Coupon {
   _id: string;
@@ -25,7 +27,7 @@ interface Coupon {
 export default function CheckoutPage() {
   const router = useRouter();
   const { cartItems, subtotal, updateQuantity, removeFromCart } = useCart();
-  const { userLocation } = useLocation();
+  const { userLocation, deliveryAvailable, setUserLocation, setDeliveryAvailable } = useLocation();
   const { user } = useAuth();
   
   const [customerInfo, setCustomerInfo] = useState({
@@ -40,6 +42,14 @@ export default function CheckoutPage() {
   });
   
   const [manualAddress, setManualAddress] = useState('');
+  const [addressDetails, setAddressDetails] = useState({
+    houseNumber: '',
+    street: '',
+    landmark: '',
+    instructions: ''
+  });
+  
+  const [isAddressSaved, setIsAddressSaved] = useState(false);
   const [deliveryDate, setDeliveryDate] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   
@@ -49,6 +59,7 @@ export default function CheckoutPage() {
   const [couponCode, setCouponCode] = useState('');
   const [showAllCoupons, setShowAllCoupons] = useState(false);
   const [couponDiscount, setCouponDiscount] = useState(0);
+  const [showLocationModal, setShowLocationModal] = useState(false);
 
   // Load address from location context
   useEffect(() => {
@@ -115,7 +126,7 @@ export default function CheckoutPage() {
 
   // Change location function
   const handleChangeLocation = () => {
-    router.push('/');
+    setShowLocationModal(true);
   };
 
   // Set delivery date on client side to avoid hydration mismatch
@@ -184,6 +195,11 @@ export default function CheckoutPage() {
     localStorage.setItem('checkoutManualAddress', manualAddress);
   }, [manualAddress]);
 
+  // Reset saved state when address details change
+  useEffect(() => {
+    setIsAddressSaved(false);
+  }, [addressDetails.houseNumber, addressDetails.street, addressDetails.landmark, addressDetails.instructions]);
+
   // Calculate values
   const packagingCharge = 20;
   
@@ -248,6 +264,7 @@ export default function CheckoutPage() {
                   cartItems,
                   customerInfo,
                   deliveryAddress,
+                  addressDetails,
                   subtotal,
                   packagingCharge,
                   couponDiscount,
@@ -310,6 +327,7 @@ export default function CheckoutPage() {
             cartItems,
             customerInfo,
             deliveryAddress,
+            addressDetails,
             subtotal,
             packagingCharge,
             couponDiscount,
@@ -336,7 +354,51 @@ export default function CheckoutPage() {
   };
 
   // Handle place order
+  const validateAddressDetails = () => {
+    // Check if location is selected
+    if (!userLocation || !userLocation.lat || !userLocation.lng) {
+      alert('Please select your delivery location on the map first');
+      setIsZomatoModalOpen(true);
+      return false;
+    }
+    
+    if (!addressDetails.houseNumber.trim()) {
+      alert('Please enter your house/flat/office number');
+      return false;
+    }
+    if (!addressDetails.street.trim()) {
+      alert('Please enter your street/area details');
+      return false;
+    }
+    
+    if (!isAddressSaved) {
+      alert('Please save your address details before proceeding');
+      return false;
+    }
+    
+    return true;
+  };
+
+  const handleSaveAddress = () => {
+    if (!addressDetails.houseNumber.trim()) {
+      alert('Please enter your house/flat/office number');
+      return;
+    }
+    if (!addressDetails.street.trim()) {
+      alert('Please enter your street/area details');
+      return;
+    }
+    
+    setIsAddressSaved(true);
+    alert('Address saved successfully!');
+  };
+
   const handlePlaceOrder = () => {
+    // Validate address details
+    if (!validateAddressDetails()) {
+      return;
+    }
+
     if (paymentMethod === 'online') {
       processOnlinePayment();
     } else if (paymentMethod === 'cash') {
@@ -430,7 +492,91 @@ export default function CheckoutPage() {
             <div className="delivery-address">
               <div className="address-type">{deliveryAddress.type}</div>
               <div className="address-text">
-                {deliveryAddress.address || userLocation?.address || 'Address not set'}
+                {deliveryAddress.address || userLocation?.address || (
+                  <div className="select-location-prompt">
+                    <button 
+                      className="select-location-btn"
+                      onClick={handleChangeLocation}
+                    >
+                      📍 Select Delivery Location
+                    </button>
+                    <p className="location-help-text">Choose your delivery location on the map</p>
+                  </div>
+                )}
+              </div>
+            </div>
+            
+            {/* Address Details Form */}
+            <div className={`address-details-form ${isAddressSaved ? 'address-saved' : ''}`}>
+              <h3 className="form-subtitle">
+                {isAddressSaved ? '✅ Address Completed' : 'Complete your address'}
+              </h3>
+              <div className="address-inputs">
+                <div className="input-row">
+                  <div className="input-group">
+                    <label htmlFor="houseNumber">House/Flat/Office No.*</label>
+                    <input
+                      id="houseNumber"
+                      type="text"
+                      placeholder="E.g. 305, 2nd Floor"
+                      value={addressDetails.houseNumber}
+                      onChange={(e) => setAddressDetails({...addressDetails, houseNumber: e.target.value})}
+                      className="address-input"
+                    />
+                  </div>
+                  <div className="input-group">
+                    <label htmlFor="street">Street/Area*</label>
+                    <input
+                      id="street"
+                      type="text"
+                      placeholder="E.g. Sector 53, Golf Course Road"
+                      value={addressDetails.street}
+                      onChange={(e) => setAddressDetails({...addressDetails, street: e.target.value})}
+                      className="address-input"
+                    />
+                  </div>
+                </div>
+                <div className="input-row">
+                  <div className="input-group">
+                    <label htmlFor="landmark">Nearby Landmark</label>
+                    <input
+                      id="landmark"
+                      type="text"
+                      placeholder="E.g. Near Metro Station, Opposite Mall"
+                      value={addressDetails.landmark}
+                      onChange={(e) => setAddressDetails({...addressDetails, landmark: e.target.value})}
+                      className="address-input"
+                    />
+                  </div>
+                </div>
+                <div className="input-row">
+                  <div className="input-group full-width">
+                    <label htmlFor="instructions">Delivery Instructions (Optional)</label>
+                    <input
+                      type="text"
+                      id="instructions"
+                      placeholder="E.g. Ring the doorbell, Call before delivery, Leave at gate"
+                      value={addressDetails.instructions}
+                      onChange={(e) => setAddressDetails({...addressDetails, instructions: e.target.value})}
+                      className="address-input"
+                    />
+                  </div>
+                </div>
+                
+                {/* Save Address Button */}
+                <div className="address-save-section">
+                  <button 
+                    type="button"
+                    onClick={handleSaveAddress}
+                    className={`save-address-btn ${isAddressSaved ? 'saved' : ''}`}
+                    disabled={isAddressSaved}
+                  >
+                    {isAddressSaved ? '✅ Address Saved' : '💾 Save Address'}
+                  </button>
+                  {!isAddressSaved && (
+                    <p className="save-note">* Save your address before proceeding to payment</p>
+                  )}
+                </div>
               </div>
             </div>
           </div>
@@ -658,6 +804,26 @@ export default function CheckoutPage() {
           </div>
         </div>
       </div>
+
+      {/* Zomato-style Location Modal */}
+      <ZomatoLocationModal 
+        isOpen={showLocationModal}
+        onClose={() => setShowLocationModal(false)}
+        onLocationSet={(locationData) => {
+          setUserLocation({
+            lat: locationData.lat,
+            lng: locationData.lng,
+            address: locationData.address,
+            distance: locationData.distance
+          });
+          setDeliveryAvailable(locationData.isWithinDeliveryRadius);
+          setDeliveryAddress({
+            type: 'Home',
+            address: locationData.address
+          });
+          setShowLocationModal(false);
+        }}
+      />
     </div>
   );
 }

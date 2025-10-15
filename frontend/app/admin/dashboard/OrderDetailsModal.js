@@ -77,11 +77,74 @@ export default function OrderDetailsModal({ order, isOpen, onClose }) {
               {order.customerInfo.email && <p>{order.customerInfo.email}</p>}
             </div>
 
-            <div className="info-card">
-              <h4>Delivery Address</h4>
-              <p>{order.deliveryAddress.address}</p>
+            <div className="info-card delivery-address-card">
+              <h4>📍 Delivery Address</h4>
+              <p><strong>{order.deliveryAddress.address}</strong></p>
+              
+              {/* Always Show Map Actions */}
+              <div className="location-section">
+                {order.deliveryAddress.coordinates ? (
+                  <div className="location-details">
+                    <div className="coordinates-badge">
+                      📌 Lat: {order.deliveryAddress.coordinates.lat?.toFixed(6)}, 
+                      Lng: {order.deliveryAddress.coordinates.lng?.toFixed(6)}
+                    </div>
+                    
+                    {/* Google Maps Actions */}
+                    <div className="map-actions">
+                      <a 
+                        href={`https://www.google.com/maps?q=${order.deliveryAddress.coordinates.lat},${order.deliveryAddress.coordinates.lng}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="map-button primary"
+                      >
+                        � Open in Google Maps
+                      </a>
+                      <a 
+                        href={`https://maps.google.com/maps?daddr=${order.deliveryAddress.coordinates.lat},${order.deliveryAddress.coordinates.lng}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="map-button secondary"
+                      >
+                        🧭 Get Directions
+                      </a>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="no-coordinates">
+                    <p className="warning-text">⚠️ No precise coordinates available</p>
+                    <a 
+                      href={`https://www.google.com/maps/search/${encodeURIComponent(order.deliveryAddress.address)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="map-button view-location"
+                    >
+                      � View Location
+                    </a>
+                  </div>
+                )}
+              </div>
+              
+              {/* Additional Address Details */}
+              {(order.deliveryAddress.houseNumber || order.deliveryAddress.street || order.deliveryAddress.landmark) && (
+                <div className="address-details">
+                  {order.deliveryAddress.houseNumber && (
+                    <p><strong>House/Flat:</strong> {order.deliveryAddress.houseNumber}</p>
+                  )}
+                  {order.deliveryAddress.street && (
+                    <p><strong>Street:</strong> {order.deliveryAddress.street}</p>
+                  )}
+                  {order.deliveryAddress.landmark && (
+                    <p><strong>Landmark:</strong> {order.deliveryAddress.landmark}</p>
+                  )}
+                  {order.deliveryAddress.instructions && (
+                    <p><strong>Instructions:</strong> {order.deliveryAddress.instructions}</p>
+                  )}
+                </div>
+              )}
+              
               {order.estimatedDeliveryTime && (
-                <p className="highlight">ETA: {order.estimatedDeliveryTime}</p>
+                <p className="highlight">⏰ ETA: {order.estimatedDeliveryTime}</p>
               )}
             </div>
 

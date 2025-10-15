@@ -37,7 +37,19 @@ export default function LocationModal({ isOpen, onClose, onLocationSet }) {
       if (status === 'OK' && response.rows[0]?.elements[0]?.status === 'OK') {
         const element = response.rows[0].elements[0];
         const distanceKm = element.distance.value / 1000;
-        callback(distanceKm, null);
+        const durationText = element.duration.text;
+        const durationMinutes = Math.round(element.duration.value / 60);
+        
+        // Add 25 minutes for food preparation time
+        const totalDurationMinutes = durationMinutes + 25;
+        const totalDurationText = `${totalDurationMinutes} mins (${durationText} drive + 25 mins prep)`;
+        
+        callback({
+          distance: distanceKm.toFixed(2),
+          duration: totalDurationText,
+          durationMinutes: totalDurationMinutes,
+          available: distanceKm <= DELIVERY_RADIUS_KM
+        }, null);
       } else {
         callback(null, "Unable to calculate distance");
       }
@@ -136,20 +148,22 @@ export default function LocationModal({ isOpen, onClose, onLocationSet }) {
       // Check delivery availability
       setDeliveryStatus({ loading: true, isAvailable: null, distance: null });
       
-      calculateRealDistance(location.lat, location.lng, (distance, error) => {
+      calculateRealDistance(location.lat, location.lng, (result, error) => {
         if (error) {
           setDeliveryStatus({ 
             loading: false, 
             isAvailable: false, 
             distance: null,
+            duration: null,
             error: error 
           });
         } else {
-          const isWithinRadius = distance <= DELIVERY_RADIUS_KM;
           setDeliveryStatus({ 
             loading: false, 
-            isAvailable: isWithinRadius, 
-            distance: distance.toFixed(2) 
+            isAvailable: result.available, 
+            distance: result.distance,
+            duration: result.duration,
+            durationMinutes: result.durationMinutes
           });
         }
       });

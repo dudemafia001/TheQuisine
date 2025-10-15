@@ -24,7 +24,7 @@ export default function CheckoutSuccessPage() {
         <div className="success-details">
           <div className="detail-item">
             <span className="detail-label">🕒 Estimated Delivery:</span>
-            <span className="detail-value">30-45 minutes</span>
+            <span className="detail-value">55-70 minutes</span>
           </div>
           <div className="detail-item">
             <span className="detail-label">📱 Order Updates:</span>

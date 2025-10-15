@@ -5,6 +5,8 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import "./menu.css";
 import { useCart } from "./contexts/CartContext";
 import { useLocation } from "./contexts/LocationContext";
+import ZomatoLocationModal from "./components/ZomatoLocationModal";
+import "./components/ZomatoLocationModal.css";
 
 export default function Home() {
   const router = useRouter();
@@ -503,101 +505,21 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Simple Location Prompt - Only show on home page now */}
-      {showLocationPrompt && pathname === '/' && (
-        <div className="location-modal-overlay" style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0, 0, 0, 0.7)',
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          zIndex: 9999
-        }}>
-          <div className="location-modal" style={{
-            backgroundColor: 'white',
-            borderRadius: '12px',
-            padding: '30px',
-            maxWidth: '400px',
-            width: '90%',
-            textAlign: 'center',
-            boxShadow: '0 10px 30px rgba(0, 0, 0, 0.3)',
-            position: 'relative'
-          }}>
-            {/* Close button */}
-            <button 
-              onClick={() => setShowLocationPrompt(false)}
-              style={{
-                position: 'absolute',
-                top: '10px',
-                right: '15px',
-                background: 'none',
-                border: 'none',
-                fontSize: '24px',
-                color: '#666',
-                cursor: 'pointer',
-                padding: '5px'
-              }}
-            >
-              ×
-            </button>
-            
-            <h3 style={{ marginBottom: '20px', color: '#124f31' }}>
-              📍 Set Your Delivery Location
-            </h3>
-            <p style={{ marginBottom: '20px', color: '#666' }}>
-              We need your location to check if we deliver to your area and calculate delivery charges.
-            </p>
-            
-            {locationError && (
-              <div style={{ 
-                color: '#d32f2f', 
-                backgroundColor: '#ffebee', 
-                padding: '10px', 
-                borderRadius: '8px', 
-                marginBottom: '20px' 
-              }}>
-                ⚠️ {locationError}
-              </div>
-            )}
-
-            <button 
-              className="btn btn-success"
-              onClick={getCurrentLocation}
-              disabled={isLoadingLocation}
-              style={{
-                width: '100%',
-                padding: '12px',
-                fontSize: '16px',
-                marginBottom: '15px'
-              }}
-            >
-              {isLoadingLocation ? "🔄 Getting Location..." : "📍 Use My Current Location"}
-            </button>
-
-            <button 
-              className="btn btn-outline-secondary"
-              onClick={() => setShowLocationPrompt(false)}
-              disabled={isLoadingLocation}
-              style={{
-                width: '100%',
-                padding: '10px',
-                fontSize: '14px',
-                marginBottom: '15px'
-              }}
-            >
-              Skip for now
-            </button>
-            
-            <p style={{ fontSize: '12px', color: '#888', marginTop: '15px' }}>
-              We only use your location to verify delivery availability. Your privacy is protected.
-            </p>
-          </div>
-        </div>
-      )}
+      {/* Zomato-style Location Modal */}
+      <ZomatoLocationModal 
+        isOpen={showLocationPrompt && pathname === '/'}
+        onClose={() => setShowLocationPrompt(false)}
+        onLocationSet={(locationData) => {
+          setUserLocation({
+            lat: locationData.lat,
+            lng: locationData.lng,
+            address: locationData.address,
+            distance: locationData.distance
+          });
+          setDeliveryAvailable(locationData.isWithinDeliveryRadius);
+          setShowLocationPrompt(false);
+        }}
+      />
     </>
   );
 }

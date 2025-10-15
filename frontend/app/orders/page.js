@@ -213,20 +213,6 @@ export default function OrdersPage() {
                         📦 Track Order
                       </button>
                       
-                      {order.orderStatus === 'placed' && order.paymentInfo.method === 'cash' && (
-                        <button 
-                          className="btn btn-outline-danger btn-sm ms-2"
-                          onClick={() => {
-                            // You can implement order cancellation here
-                            if (confirm('Are you sure you want to cancel this order?')) {
-                              alert('Order cancellation functionality can be implemented here');
-                            }
-                          }}
-                        >
-                          Cancel Order
-                        </button>
-                      )}
-                      
                       {/* Order Tracking Section */}
                       {showTracking[order.orderId] && (
                         <div className="mt-3 p-3 border-top">

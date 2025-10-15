@@ -35,6 +35,7 @@ export default function RootLayout({
     <html lang="en">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        suppressHydrationWarning={true}
       >
         <Script 
           src="https://checkout.razorpay.com/v1/checkout.js"

@@ -5,6 +5,25 @@ import Order from '../models/Order.js';
 
 dotenv.config();
 
+// Helper function to generate unique order ID with format TQ + 4 digits + single hash
+const generateOrderId = async () => {
+  let orderId;
+  let isUnique = false;
+  
+  while (!isUnique) {
+    const randomNum = Math.floor(1000 + Math.random() * 9000); // Generate 4-digit number
+    orderId = `TQ${randomNum}#`;
+    
+    // Check if this ID already exists
+    const existingOrder = await Order.findOne({ orderId });
+    if (!existingOrder) {
+      isUnique = true;
+    }
+  }
+  
+  return orderId;
+};
+
 // Initialize Razorpay only if credentials are provided
 let razorpay = null;
 
@@ -106,7 +125,7 @@ export const verifyPayment = async (req, res) => {
           console.log('📋 Creating order for online payment...');
           console.log('Order Details received:', JSON.stringify(orderDetails, null, 2));
           
-          const orderId = `ORDER_${Date.now()}`;
+          const orderId = await generateOrderId();
           
           // Transform cart items to order items format
           const orderItems = orderDetails.cartItems.map(item => {
@@ -216,7 +235,7 @@ export const processCashPayment = async (req, res) => {
       console.log('💰 Creating cash order...');
       console.log('Order Details received:', JSON.stringify(orderDetails, null, 2));
       
-      const orderId = `CASH_${Date.now()}`;
+      const orderId = await generateOrderId();
       
       // Transform cart items to order items format
       const orderItems = orderDetails.cartItems.map(item => {

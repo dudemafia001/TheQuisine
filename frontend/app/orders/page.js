@@ -11,10 +11,19 @@ export default function OrdersPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showTracking, setShowTracking] = useState({});
+  const [expandedItems, setExpandedItems] = useState({});
 
   // Toggle tracking view for specific order
   const toggleTrackingView = (orderId) => {
     setShowTracking(prev => ({
+      ...prev,
+      [orderId]: !prev[orderId]
+    }));
+  };
+
+  // Toggle expanded items view for specific order
+  const toggleExpandedItems = (orderId) => {
+    setExpandedItems(prev => ({
       ...prev,
       [orderId]: !prev[orderId]
     }));
@@ -129,6 +138,9 @@ export default function OrdersPage() {
       <div className="row">
         <div className="col-12">
           <h1>My Orders</h1>
+          <div className="alert alert-info mb-3">
+            <i className="fas fa-phone"></i> For any queries regarding your orders, call us at: <strong>7992132123</strong>
+          </div>
           
           {error && (
             <div className="alert alert-danger" role="alert">
@@ -172,14 +184,20 @@ export default function OrdersPage() {
                       <div className="mb-3">
                         <small className="text-muted">Items ({order.items.length})</small>
                         <div className="mt-1">
-                          {order.items.slice(0, 2).map((item, index) => (
+                          {(expandedItems[order.orderId] ? order.items : order.items.slice(0, 2)).map((item, index) => (
                             <div key={index} className="small">
                               • {item.productName} ({item.variant}) × {item.quantity}
                             </div>
                           ))}
                           {order.items.length > 2 && (
-                            <div className="small text-muted">
-                              + {order.items.length - 2} more items
+                            <div 
+                              className="small text-muted" 
+                              style={{ cursor: 'pointer', color: '#124f31', fontWeight: 'bold' }}
+                              onClick={() => toggleExpandedItems(order.orderId)}
+                            >
+                              {expandedItems[order.orderId] 
+                                ? '- Show less' 
+                                : `+ ${order.items.length - 2} more items`}
                             </div>
                           )}
                         </div>
@@ -212,6 +230,26 @@ export default function OrdersPage() {
                       >
                         📦 Track Order
                       </button>
+                      
+                      {/* Contact Options for Non-Delivered Orders */}
+                      {order.orderStatus !== 'delivered' && (
+                        <div className="mt-2 d-flex gap-2">
+                          <a 
+                            href="tel:7992132123" 
+                            className="btn btn-outline-primary btn-sm"
+                          >
+                            📞 Call Us
+                          </a>
+                          <a 
+                            href={`https://wa.me/917992132123?text=Hi, I want to know my order status with order ID: ${order.orderId}?`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="btn btn-outline-success btn-sm"
+                          >
+                            💬 WhatsApp
+                          </a>
+                        </div>
+                      )}
                       
                       {/* Order Tracking Section */}
                       {showTracking[order.orderId] && (

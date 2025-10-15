@@ -95,7 +95,8 @@ router.get("/orders", async (req, res) => {
 // Update order status
 router.patch("/orders/:orderId/status", async (req, res) => {
   try {
-    const { orderId } = req.params;
+    // URL decode the orderId to handle special characters like # in TQ1234#
+    const orderId = decodeURIComponent(req.params.orderId);
     const { status } = req.body;
 
     const validStatuses = ['placed', 'confirmed', 'preparing', 'out_for_delivery', 'delivered', 'cancelled'];
@@ -234,13 +235,18 @@ router.get("/analytics", async (req, res) => {
 // Get single order details
 router.get("/orders/:orderId", async (req, res) => {
   try {
-    const { orderId } = req.params;
+    // URL decode the orderId to handle special characters like # in TQ1234#
+    const orderId = decodeURIComponent(req.params.orderId);
+    console.log('Fetching order with ID:', orderId);
+    
     const order = await Order.findOne({ orderId });
 
     if (!order) {
+      console.log('Order not found:', orderId);
       return res.status(404).json({ message: "Order not found" });
     }
 
+    console.log('Order found successfully:', orderId);
     res.json(order);
   } catch (err) {
     console.error("Error fetching order:", err);

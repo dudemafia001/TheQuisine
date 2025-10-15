@@ -28,7 +28,7 @@ export default function CheckoutPage() {
   const router = useRouter();
   const { cartItems, subtotal, updateQuantity, removeFromCart } = useCart();
   const { userLocation, deliveryAvailable, setUserLocation, setDeliveryAvailable } = useLocation();
-  const { user } = useAuth();
+  const { user, isAuthenticated, loading } = useAuth();
   
   const [customerInfo, setCustomerInfo] = useState({
     fullName: 'Ambuj Dwivedi',
@@ -410,7 +410,7 @@ export default function CheckoutPage() {
     }
   };
 
-  if (isLoading) {
+  if (isLoading || loading) {
     return (
       <div className="checkout-container">
         <div style={{ 
@@ -422,6 +422,41 @@ export default function CheckoutPage() {
           color: '#4a5568'
         }}>
           Loading checkout...
+        </div>
+      </div>
+    );
+  }
+
+  // Require authentication to access checkout
+  if (!isAuthenticated) {
+    return (
+      <div className="checkout-container">
+        <div style={{ 
+          display: 'flex', 
+          flexDirection: 'column',
+          justifyContent: 'center', 
+          alignItems: 'center', 
+          height: '50vh',
+          textAlign: 'center'
+        }}>
+          <h2 style={{ color: '#124f31', marginBottom: '20px' }}>Sign In Required</h2>
+          <p style={{ fontSize: '18px', color: '#4a5568', marginBottom: '30px' }}>
+            Please sign in to place your order
+          </p>
+          <button 
+            onClick={() => router.push('/auth')}
+            style={{
+              backgroundColor: '#124f31',
+              color: 'white',
+              padding: '12px 30px',
+              border: 'none',
+              borderRadius: '8px',
+              fontSize: '16px',
+              cursor: 'pointer'
+            }}
+          >
+            Sign In to Continue
+          </button>
         </div>
       </div>
     );

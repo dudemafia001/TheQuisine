@@ -120,7 +120,9 @@ export default function AdminDashboard() {
 
   const updateOrderStatus = async (orderId, newStatus) => {
     try {
-      const response = await fetch(`http://localhost:5001/api/admin/orders/${orderId}/status`, {
+      // URL encode the orderId to handle special characters like # in TQ1234#
+      const encodedOrderId = encodeURIComponent(orderId);
+      const response = await fetch(`http://localhost:5001/api/admin/orders/${encodedOrderId}/status`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -131,6 +133,9 @@ export default function AdminDashboard() {
       if (response.ok) {
         fetchOrders(); // Refresh orders
         fetchAnalytics(); // Refresh analytics
+        console.log('Order status updated successfully:', orderId, newStatus);
+      } else {
+        console.error('Failed to update order status');
       }
     } catch (error) {
       console.error('Error updating order status:', error);
@@ -139,15 +144,23 @@ export default function AdminDashboard() {
 
   const handleViewOrder = async (orderId) => {
     try {
-      const response = await fetch(`http://localhost:5001/api/admin/orders/${orderId}`);
+      console.log('Attempting to fetch order:', orderId);
+      // URL encode the orderId to handle special characters like # in TQ1234#
+      const encodedOrderId = encodeURIComponent(orderId);
+      const response = await fetch(`http://localhost:5001/api/admin/orders/${encodedOrderId}`);
       const data = await response.json();
       
       if (response.ok) {
+        console.log('Order fetched successfully:', data);
         setSelectedOrder(data);
         setIsModalOpen(true);
+      } else {
+        console.error('Failed to fetch order:', data);
+        alert('Failed to load order details: ' + (data.message || 'Unknown error'));
       }
     } catch (error) {
       console.error('Error fetching order details:', error);
+      alert('Error loading order details. Please try again.');
     }
   };
 

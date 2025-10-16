@@ -4,6 +4,7 @@ import { useCart } from '../contexts/CartContext';
 import { useLocation } from '../contexts/LocationContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useRouter } from 'next/navigation';
+import { API_URLS, getUserOrdersUrl } from '../../config';
 import './checkout.css';
 import ZomatoLocationModal from '../components/ZomatoLocationModal';
 import '../components/ZomatoLocationModal.css';
@@ -60,6 +61,7 @@ export default function CheckoutPage() {
   const [showAllCoupons, setShowAllCoupons] = useState(false);
   const [couponDiscount, setCouponDiscount] = useState(0);
   const [showLocationModal, setShowLocationModal] = useState(false);
+  const [isZomatoModalOpen, setIsZomatoModalOpen] = useState(false);
 
   // Load address from location context
   useEffect(() => {
@@ -75,7 +77,7 @@ export default function CheckoutPage() {
   useEffect(() => {
     const fetchCoupons = async () => {
       try {
-        const response = await fetch('http://localhost:5001/api/coupons/active');
+        const response = await fetch(API_URLS.COUPONS_ACTIVE);
         if (response.ok) {
           const couponsData = await response.json();
           setCoupons(couponsData);
@@ -91,7 +93,7 @@ export default function CheckoutPage() {
   // Apply coupon function
   const applyCoupon = async (code: string) => {
     try {
-      const response = await fetch('http://localhost:5001/api/coupons/validate', {
+      const response = await fetch(API_URLS.COUPONS_VALIDATE, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -221,7 +223,7 @@ export default function CheckoutPage() {
       setIsProcessingPayment(true);
 
       // Create order on backend
-      const orderResponse = await fetch('http://localhost:5001/api/payments/create-order', {
+      const orderResponse = await fetch(API_URLS.PAYMENT_CREATE_ORDER, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -250,7 +252,7 @@ export default function CheckoutPage() {
         handler: async (response: { razorpay_payment_id: string; razorpay_order_id: string; razorpay_signature: string }) => {
           try {
             // Verify payment on backend
-            const verifyResponse = await fetch('http://localhost:5001/api/payments/verify', {
+            const verifyResponse = await fetch(API_URLS.PAYMENT_VERIFY, {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
@@ -315,7 +317,7 @@ export default function CheckoutPage() {
     try {
       setIsProcessingPayment(true);
 
-      const response = await fetch('http://localhost:5001/api/payments/cash', {
+      const response = await fetch(API_URLS.PAYMENT_CASH, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -844,7 +846,7 @@ export default function CheckoutPage() {
       <ZomatoLocationModal 
         isOpen={showLocationModal}
         onClose={() => setShowLocationModal(false)}
-        onLocationSet={(locationData) => {
+        onLocationSet={(locationData: any) => {
           setUserLocation({
             lat: locationData.lat,
             lng: locationData.lng,

@@ -6,14 +6,15 @@ import "./menu.css";
 import { useCart } from "./contexts/CartContext";
 import { useLocation } from "./contexts/LocationContext";
 import ZomatoLocationModal from "./components/ZomatoLocationModal";
+import { API_URLS } from "../config";
 import "./components/ZomatoLocationModal.css";
 
 export default function Home() {
   const router = useRouter();
   const pathname = usePathname();
-  const [products, setProducts] = useState([]);
+  const [products, setProducts] = useState<any[]>([]);
   const [selectedCategory, setSelectedCategory] = useState("");
-  const [selectedVariants, setSelectedVariants] = useState({});
+  const [selectedVariants, setSelectedVariants] = useState<any>({});
   const [showLocationPrompt, setShowLocationPrompt] = useState(false);
   const [isLoadingLocation, setIsLoadingLocation] = useState(false);
   const [locationError, setLocationError] = useState("");
@@ -99,19 +100,19 @@ export default function Home() {
 
   useEffect(() => {
     // ✅ Load Bootstrap only on client
-    import("bootstrap/dist/js/bootstrap.bundle.min.js")
-      .then((bootstrap) => {
+    import("bootstrap/dist/js/bootstrap.bundle.min.js" as any)
+      .then((bootstrap: any) => {
         console.log("✅ Bootstrap JS loaded");
         const modalEl = document.getElementById("cartModal");
         if (modalEl) {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          new (bootstrap as any).Modal(modalEl);
+          new bootstrap.Modal(modalEl);
           console.log("✅ Bootstrap modal initialized");
         }
       })
       .catch((err) => console.error("❌ Bootstrap JS failed", err));
 
-    fetch("http://localhost:5001/api/products")
+    fetch(API_URLS.PRODUCTS)
       .then((res) => res.json())
       .then((data) => {
         if (Array.isArray(data)) {

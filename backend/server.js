@@ -15,7 +15,19 @@ import otpRoutes from "./src/routes/otpRoutes.js";
 dotenv.config();
 
 const app = express();
-app.use(cors({ origin: ["http://localhost:3000", "http://localhost:3001"] }));
+
+// CORS configuration for development and production
+const allowedOrigins = [
+  "http://localhost:3000", 
+  "http://localhost:3001",
+  // Add your production frontend URL here
+  process.env.FRONTEND_URL || "https://your-frontend-domain.com"
+];
+
+app.use(cors({ 
+  origin: allowedOrigins,
+  credentials: true 
+}));
 
 app.use(express.json());
 

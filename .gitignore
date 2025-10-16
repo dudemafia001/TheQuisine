@@ -1,10 +1,54 @@
+# Environment variables (sensitive information)
+backend/.env
+frontend/.env.local
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
 # Node dependencies
 node_modules/
+*/node_modules/
 
-# Env files
-.env
-
-# Build output
+# Build outputs
+frontend/.next/
+backend/dist/
 .next/
 dist/
 build/
+
+# Logs
+*.log
+logs/
+
+# Runtime data
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage directory used by tools like istanbul
+coverage/
+
+# Dependency directories
+jspm_packages/
+
+# Optional npm cache directory
+.npm
+
+# Optional eslint cache
+.eslintcache
+
+# Output of 'npm pack'
+*.tgz
+
+# Yarn Integrity file
+.yarn-integrity
+
+# Vercel
+.vercel
+
+# System files
+.DS_Store
+Thumbs.db

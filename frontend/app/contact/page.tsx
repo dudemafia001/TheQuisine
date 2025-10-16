@@ -123,7 +123,7 @@ export default function ContactPage() {
                   <div className="method-details">
                     <h3>Email</h3>
                     <p>For detailed inquiries and feedback</p>
-                    <a href="mailto:support@thequisine.com" className="contact-link">support@thequisine.com</a>
+                    <a href="mailto:support@thequisine.in" className="contact-link">support@thequisine.in</a>
                   </div>
                 </div>
 
@@ -293,10 +293,10 @@ export default function ContactPage() {
               <a href="/orders" className="action-btn">My Orders</a>
             </div>
             <div className="action-card">
-              <div className="action-icon">🎉</div>
-              <h3>Event Catering</h3>
-              <p>Planning a special occasion? We've got you covered</p>
-              <a href="/about" className="action-btn">Learn More</a>
+              <div className="action-icon">�</div>
+              <h3>Services</h3>
+              <p>Explore our complete range of services and offerings</p>
+              <a href="/services" className="action-btn">View Services</a>
             </div>
           </div>
         </div>

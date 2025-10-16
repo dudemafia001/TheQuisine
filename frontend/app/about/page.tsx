@@ -72,9 +72,10 @@ export default function AboutPage() {
               <p>Complete meals starting at ₹229, packed hygienically for office lunches or home dinners.</p>
             </div>
             <div className="specialty-item">
-              <div className="specialty-icon">🎉</div>
-              <h3>Event Catering</h3>
-              <p>From weddings, birthdays, kitty parties to poojas and get-togethers, we cater all special occasions with customizable menus.</p>
+              <div className="specialty-icon">�</div>
+              <h3>Our Services</h3>
+              <p>Explore our complete range of services including bulk orders, event catering, and customized food boxes.</p>
+              <a href="/services" className="specialty-link">View All Services →</a>
             </div>
             <div className="specialty-item">
               <div className="specialty-icon">🥘</div>

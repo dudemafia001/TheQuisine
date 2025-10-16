@@ -9,6 +9,7 @@ import couponRoutes from "./src/routes/couponRoutes.js";
 import paymentRoutes from "./src/routes/paymentRoutes.js";
 import orderRoutes from "./src/routes/orderRoutes.js";
 import adminRoutes from "./src/routes/adminRoutes.js";
+import contactRoutes from "./src/routes/contactRoutes.js";
 
 dotenv.config();
 
@@ -30,6 +31,7 @@ app.use("/api/coupons", couponRoutes);
 app.use("/api/payments", paymentRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/contact", contactRoutes);
 
 app.get("/", (req, res) => {
   res.send("API is running...");

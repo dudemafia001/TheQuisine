@@ -28,6 +28,17 @@ export default function AdminDashboard() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
+  // Queries section state
+  const [queries, setQueries] = useState([]);
+  const [queriesLoading, setQueriesLoading] = useState(false);
+  const [queriesFilters, setQueriesFilters] = useState({
+    status: 'all',
+    page: 1,
+    limit: 10
+  });
+  const [selectedQuery, setSelectedQuery] = useState(null);
+  const [isQueryModalOpen, setIsQueryModalOpen] = useState(false);
+
   useEffect(() => {
     if (!loading && !isAuthenticated) {
       router.push('/admin');
@@ -41,6 +52,13 @@ export default function AdminDashboard() {
       fetchAnalytics();
     }
   }, [isAuthenticated]);
+
+  // Load queries when queries section is active
+  useEffect(() => {
+    if (isAuthenticated && activeSection === 'queries') {
+      fetchQueries();
+    }
+  }, [isAuthenticated, activeSection, queriesFilters]);
 
   // Load orders when filters are applied
   useEffect(() => {
@@ -173,6 +191,112 @@ export default function AdminDashboard() {
     setIsMobileMenuOpen(!isMobileMenuOpen);
   };
 
+  // Queries management functions
+  const fetchQueries = async () => {
+    try {
+      setQueriesLoading(true);
+      const { status, page, limit } = queriesFilters;
+      const queryParams = new URLSearchParams({
+        status: status !== 'all' ? status : '',
+        page: page.toString(),
+        limit: limit.toString()
+      });
+
+      const response = await fetch(`http://localhost:5001/api/contact?${queryParams}`);
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        setQueries(data.data.messages);
+      } else {
+        console.error('Failed to fetch queries:', data.message);
+      }
+    } catch (error) {
+      console.error('Error fetching queries:', error);
+    } finally {
+      setQueriesLoading(false);
+    }
+  };
+
+  const handleViewQuery = async (queryId) => {
+    try {
+      const response = await fetch(`http://localhost:5001/api/contact/${queryId}`);
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        setSelectedQuery(data.data);
+        setIsQueryModalOpen(true);
+      } else {
+        console.error('Failed to fetch query details:', data.message);
+        alert('Failed to load query details');
+      }
+    } catch (error) {
+      console.error('Error fetching query details:', error);
+      alert('Error loading query details. Please try again.');
+    }
+  };
+
+  const updateQueryStatus = async (queryId, newStatus, adminNotes = '') => {
+    try {
+      const response = await fetch(`http://localhost:5001/api/contact/${queryId}/status`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ status: newStatus, adminNotes }),
+      });
+
+      if (response.ok) {
+        fetchQueries(); // Refresh queries
+        if (selectedQuery && selectedQuery._id === queryId) {
+          setSelectedQuery({ ...selectedQuery, status: newStatus, adminNotes });
+        }
+        console.log('Query status updated successfully:', queryId, newStatus);
+      } else {
+        console.error('Failed to update query status');
+      }
+    } catch (error) {
+      console.error('Error updating query status:', error);
+    }
+  };
+
+  const handleCloseQueryModal = () => {
+    setIsQueryModalOpen(false);
+    setSelectedQuery(null);
+  };
+
+  const formatQuerySubject = (subject) => {
+    const subjects = {
+      general: 'General Inquiry',
+      order: 'Order Related',
+      catering: 'Event Catering',
+      bulk: 'Bulk Orders',
+      feedback: 'Feedback',
+      complaint: 'Complaint',
+      other: 'Other'
+    };
+    return subjects[subject] || subject;
+  };
+
+  const getQueryStatusColor = (status) => {
+    switch (status) {
+      case 'new': return 'status-new';
+      case 'in_progress': return 'status-progress';
+      case 'resolved': return 'status-resolved';
+      case 'closed': return 'status-closed';
+      default: return '';
+    }
+  };
+
+  const formatQueryStatus = (status) => {
+    const statuses = {
+      new: 'New',
+      in_progress: 'In Progress',
+      resolved: 'Resolved',
+      closed: 'Closed'
+    };
+    return statuses[status] || status;
+  };
+
   const closeMobileMenu = () => {
     setIsMobileMenuOpen(false);
   };
@@ -273,6 +397,16 @@ export default function AdminDashboard() {
           >
             <span className="nav-icon">📈</span>
             Analytics
+          </div>
+          <div 
+            className={`nav-item ${activeSection === 'queries' ? 'active' : ''}`}
+            onClick={() => {
+              setActiveSection('queries');
+              closeMobileMenu();
+            }}
+          >
+            <span className="nav-icon">💬</span>
+            Queries
           </div>
         </nav>
       </div>
@@ -515,6 +649,112 @@ export default function AdminDashboard() {
             </div>
           </div>
         )}
+
+        {activeSection === 'queries' && (
+          <div className="content-section">
+            <div className="section-header">
+              <h2 className="section-title">Customer Queries</h2>
+            </div>
+            
+            <div className="filters-container">
+              <div className="filters-grid">
+                <div className="filter-group">
+                  <label className="filter-label">Status</label>
+                  <select 
+                    className="filter-select"
+                    value={queriesFilters.status}
+                    onChange={(e) => setQueriesFilters({ ...queriesFilters, status: e.target.value, page: 1 })}
+                  >
+                    <option value="all">All Queries</option>
+                    <option value="new">New</option>
+                    <option value="in_progress">In Progress</option>
+                    <option value="resolved">Resolved</option>
+                    <option value="closed">Closed</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            {queriesLoading ? (
+              <div className="loading-state">
+                <div className="loading-spinner"></div>
+                <p>Loading queries...</p>
+              </div>
+            ) : (
+              <div className="table-container">
+                <table className="admin-table">
+                  <thead>
+                    <tr>
+                      <th>Date</th>
+                      <th>Name</th>
+                      <th>Subject</th>
+                      <th>Status</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {queries.length > 0 ? (
+                      queries.map((query) => (
+                        <tr key={query._id}>
+                          <td>
+                            <div className="query-date">
+                              {new Date(query.createdAt).toLocaleDateString()}
+                            </div>
+                            <div className="query-time">
+                              {new Date(query.createdAt).toLocaleTimeString()}
+                            </div>
+                          </td>
+                          <td>
+                            <div className="query-customer">
+                              <div className="customer-name">{query.name}</div>
+                              <div className="customer-email">{query.email}</div>
+                            </div>
+                          </td>
+                          <td>
+                            <div className="query-subject">
+                              <span className="subject-badge">{formatQuerySubject(query.subject)}</span>
+                            </div>
+                          </td>
+                          <td>
+                            <select
+                              className={`status-select ${getQueryStatusColor(query.status)}`}
+                              value={query.status}
+                              onChange={(e) => updateQueryStatus(query._id, e.target.value)}
+                            >
+                              <option value="new">New</option>
+                              <option value="in_progress">In Progress</option>
+                              <option value="resolved">Resolved</option>
+                              <option value="closed">Closed</option>
+                            </select>
+                          </td>
+                          <td>
+                            <button 
+                              className="action-button view-button"
+                              onClick={() => handleViewQuery(query._id)}
+                              title="View Query Details"
+                            >
+                              👁️ View
+                            </button>
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan="5" className="no-data">
+                          <div className="no-data-message">
+                            <span className="no-data-icon">💬</span>
+                            <h3>No queries found</h3>
+                            <p>No customer queries match the current filters.</p>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Order Details Modal */}
@@ -523,6 +763,79 @@ export default function AdminDashboard() {
         isOpen={isModalOpen}
         onClose={handleCloseModal}
       />
+
+      {/* Query Details Modal */}
+      {isQueryModalOpen && selectedQuery && (
+        <div className="modal-overlay" onClick={handleCloseQueryModal}>
+          <div className="modal-content query-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Query Details</h2>
+              <button className="modal-close" onClick={handleCloseQueryModal}>×</button>
+            </div>
+            <div className="modal-body">
+              <div className="query-details">
+                <div className="query-info-grid">
+                  <div className="info-group">
+                    <label>Customer Name:</label>
+                    <span>{selectedQuery.name}</span>
+                  </div>
+                  <div className="info-group">
+                    <label>Email:</label>
+                    <span>{selectedQuery.email}</span>
+                  </div>
+                  <div className="info-group">
+                    <label>Phone:</label>
+                    <span>{selectedQuery.phone || 'Not provided'}</span>
+                  </div>
+                  <div className="info-group">
+                    <label>Subject:</label>
+                    <span className="subject-badge">{formatQuerySubject(selectedQuery.subject)}</span>
+                  </div>
+                  <div className="info-group">
+                    <label>Status:</label>
+                    <select
+                      className={`status-select ${getQueryStatusColor(selectedQuery.status)}`}
+                      value={selectedQuery.status}
+                      onChange={(e) => updateQueryStatus(selectedQuery._id, e.target.value)}
+                    >
+                      <option value="new">New</option>
+                      <option value="in_progress">In Progress</option>
+                      <option value="resolved">Resolved</option>
+                      <option value="closed">Closed</option>
+                    </select>
+                  </div>
+                  <div className="info-group">
+                    <label>Date:</label>
+                    <span>{new Date(selectedQuery.createdAt).toLocaleString()}</span>
+                  </div>
+                </div>
+                
+                <div className="message-section">
+                  <label>Message:</label>
+                  <div className="message-content">{selectedQuery.message}</div>
+                </div>
+                
+                <div className="admin-notes-section">
+                  <label>Admin Notes:</label>
+                  <textarea
+                    className="admin-notes-input"
+                    value={selectedQuery.adminNotes || ''}
+                    onChange={(e) => setSelectedQuery({ ...selectedQuery, adminNotes: e.target.value })}
+                    placeholder="Add notes about this query..."
+                    rows={3}
+                  />
+                  <button
+                    className="save-notes-btn"
+                    onClick={() => updateQueryStatus(selectedQuery._id, selectedQuery.status, selectedQuery.adminNotes)}
+                  >
+                    Save Notes
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

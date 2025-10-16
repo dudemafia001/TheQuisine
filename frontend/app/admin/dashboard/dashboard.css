@@ -685,3 +685,248 @@
     gap: 1rem;
   }
 }
+
+/* Queries Section Styles */
+.admin-table th,
+.admin-table td {
+  padding: 12px 16px;
+  text-align: left;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.admin-table th {
+  background-color: #f7fafc;
+  font-weight: 600;
+  color: #4a5568;
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.admin-table th:first-child {
+  width: 120px;
+}
+
+.admin-table th:nth-child(2) {
+  width: 200px;
+}
+
+.admin-table th:nth-child(3) {
+  width: 150px;
+}
+
+.admin-table th:nth-child(4) {
+  width: 140px;
+}
+
+.admin-table th:nth-child(5) {
+  width: 120px;
+}
+
+.query-date {
+  font-weight: 600;
+  color: #2d3748;
+}
+
+.query-time {
+  font-size: 0.8rem;
+  color: #718096;
+}
+
+.query-customer {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.customer-name {
+  font-weight: 600;
+  color: #2d3748;
+}
+
+.customer-email {
+  font-size: 0.875rem;
+  color: #4a5568;
+}
+
+.query-subject {
+  display: flex;
+  align-items: center;
+}
+
+.subject-badge {
+  background: #e6fffa;
+  color: #234e52;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border: 1px solid #81e6d9;
+}
+
+.status-select {
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.status-select.status-new {
+  background: #fed7d7;
+  color: #c53030;
+  border-color: #feb2b2;
+}
+
+.status-select.status-progress {
+  background: #feebc8;
+  color: #c05621;
+  border-color: #f6ad55;
+}
+
+.status-select.status-resolved {
+  background: #c6f6d5;
+  color: #22543d;
+  border-color: #9ae6b4;
+}
+
+.status-select.status-closed {
+  background: #e6fffa;
+  color: #234e52;
+  border-color: #81e6d9;
+}
+
+/* Query Modal Styles */
+.query-modal {
+  max-width: 800px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.query-details {
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+}
+
+.query-info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 20px;
+}
+
+.info-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.info-group label {
+  font-weight: 600;
+  color: #4a5568;
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.info-group span {
+  color: #2d3748;
+  font-weight: 500;
+}
+
+.message-section {
+  background: #f7fafc;
+  padding: 20px;
+  border-radius: 8px;
+  border-left: 4px solid #4299e1;
+}
+
+.message-section label {
+  display: block;
+  font-weight: 600;
+  color: #4a5568;
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 10px;
+}
+
+.message-content {
+  color: #2d3748;
+  line-height: 1.6;
+  font-size: 1rem;
+  white-space: pre-wrap;
+}
+
+.admin-notes-section {
+  background: #fafafa;
+  padding: 20px;
+  border-radius: 8px;
+  border-left: 4px solid #38a169;
+}
+
+.admin-notes-section label {
+  display: block;
+  font-weight: 600;
+  color: #4a5568;
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 10px;
+}
+
+.admin-notes-input {
+  width: 100%;
+  padding: 12px;
+  border: 2px solid #e2e8f0;
+  border-radius: 6px;
+  font-size: 1rem;
+  line-height: 1.5;
+  resize: vertical;
+  transition: border-color 0.2s;
+}
+
+.admin-notes-input:focus {
+  outline: none;
+  border-color: #4299e1;
+  box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.1);
+}
+
+.save-notes-btn {
+  background: #38a169;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-top: 10px;
+}
+
+.save-notes-btn:hover {
+  background: #2f855a;
+  transform: translateY(-1px);
+}
+
+/* Mobile Responsiveness for Queries */
+@media (max-width: 768px) {
+  .query-info-grid {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+  
+  .admin-table td {
+    font-size: 0.875rem;
+  }
+  
+  .customer-email {
+    font-size: 0.75rem;
+  }
+  
+  .query-time {
+    font-size: 0.75rem;
+  }
+}

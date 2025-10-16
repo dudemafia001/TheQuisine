@@ -10,6 +10,7 @@ import paymentRoutes from "./src/routes/paymentRoutes.js";
 import orderRoutes from "./src/routes/orderRoutes.js";
 import adminRoutes from "./src/routes/adminRoutes.js";
 import contactRoutes from "./src/routes/contactRoutes.js";
+import otpRoutes from "./src/routes/otpRoutes.js";
 
 dotenv.config();
 
@@ -32,6 +33,7 @@ app.use("/api/payments", paymentRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/contact", contactRoutes);
+app.use("/api/otp", otpRoutes);
 
 app.get("/", (req, res) => {
   res.send("API is running...");

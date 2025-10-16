@@ -24,6 +24,67 @@ const generateOrderId = async () => {
   return orderId;
 };
 
+// Calculate estimated delivery time based on distance and current order load
+const calculateEstimatedDeliveryTime = (deliveryAddress) => {
+  // Base preparation time (in minutes)
+  const basePrepTime = 25; // Standard food preparation time
+  
+  // If address has coordinates, calculate distance-based delivery time
+  if (deliveryAddress.lat && deliveryAddress.lng) {
+    const deliveryCenter = { lat: 26.4201563, lng: 80.3600507 }; // Shyam Nagar, Kanpur
+    
+    // Calculate straight-line distance (Haversine formula)
+    const distance = calculateDistance(
+      deliveryCenter.lat, 
+      deliveryCenter.lng, 
+      deliveryAddress.lat, 
+      deliveryAddress.lng
+    );
+    
+    // Estimate travel time (assuming 20-30 km/h average speed in city)
+    const avgSpeed = 25; // km/h
+    const travelTimeMinutes = Math.round((distance / avgSpeed) * 60);
+    
+    const totalTime = basePrepTime + travelTimeMinutes;
+    
+    // Round to nearest 5 minutes for better customer experience
+    const roundedTime = Math.round(totalTime / 5) * 5;
+    
+    // Create time range (±10 minutes)
+    const minTime = Math.max(roundedTime - 10, basePrepTime);
+    const maxTime = roundedTime + 10;
+    
+    return `${minTime}-${maxTime} minutes`;
+  } else {
+    // Default time range when no coordinates available
+    const currentHour = new Date().getHours();
+    
+    // Adjust based on time of day (peak hours take longer)
+    let baseTime = 45;
+    if (currentHour >= 12 && currentHour <= 14) { // Lunch peak
+      baseTime = 55;
+    } else if (currentHour >= 19 && currentHour <= 21) { // Dinner peak
+      baseTime = 60;
+    }
+    
+    return `${baseTime}-${baseTime + 15} minutes`;
+  }
+};
+
+// Helper function to calculate distance between two points (Haversine formula)
+const calculateDistance = (lat1, lng1, lat2, lng2) => {
+  const R = 6371; // Earth's radius in kilometers
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLng = (lng2 - lng1) * Math.PI / 180;
+  const a = 
+    Math.sin(dLat/2) * Math.sin(dLat/2) +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+    Math.sin(dLng/2) * Math.sin(dLng/2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  const distance = R * c; // Distance in kilometers
+  return distance;
+};
+
 // Initialize Razorpay only if credentials are provided
 let razorpay = null;
 
@@ -144,6 +205,16 @@ export const verifyPayment = async (req, res) => {
           
           console.log('📦 Transformed order items:', JSON.stringify(orderItems, null, 2));
           
+          const deliveryAddress = {
+            address: orderDetails.deliveryAddress?.address || 'No address provided',
+            lat: orderDetails.deliveryAddress?.lat,
+            lng: orderDetails.deliveryAddress?.lng
+          };
+          
+          // Calculate estimated delivery time based on location
+          const estimatedDeliveryTime = calculateEstimatedDeliveryTime(deliveryAddress);
+          console.log('🕒 Calculated delivery time:', estimatedDeliveryTime);
+          
           const newOrder = new Order({
             orderId,
             orderNumber: orderId, // Set orderNumber to avoid null index conflicts
@@ -153,11 +224,7 @@ export const verifyPayment = async (req, res) => {
               phone: orderDetails.customerInfo.phone,
               email: orderDetails.customerInfo.email
             },
-            deliveryAddress: {
-              address: orderDetails.deliveryAddress?.address || 'No address provided',
-              lat: orderDetails.deliveryAddress?.lat,
-              lng: orderDetails.deliveryAddress?.lng
-            },
+            deliveryAddress,
             items: orderItems,
             pricing: {
               subtotal: orderDetails.subtotal,
@@ -174,7 +241,8 @@ export const verifyPayment = async (req, res) => {
             appliedCoupon: orderDetails.appliedCoupon ? {
               code: orderDetails.appliedCoupon.code,
               discount: orderDetails.appliedCoupon.discount_value || 0
-            } : {}
+            } : {},
+            estimatedDeliveryTime
           });
 
           console.log('💾 Saving order to database...');
@@ -254,6 +322,16 @@ export const processCashPayment = async (req, res) => {
       
       console.log('📦 Transformed order items:', JSON.stringify(orderItems, null, 2));
       
+      const deliveryAddress = {
+        address: orderDetails.deliveryAddress?.address || 'No address provided',
+        lat: orderDetails.deliveryAddress?.lat,
+        lng: orderDetails.deliveryAddress?.lng
+      };
+      
+      // Calculate estimated delivery time based on location
+      const estimatedDeliveryTime = calculateEstimatedDeliveryTime(deliveryAddress);
+      console.log('🕒 Calculated delivery time for cash order:', estimatedDeliveryTime);
+      
       const newOrder = new Order({
         orderId,
         orderNumber: orderId, // Set orderNumber to avoid null index conflicts
@@ -263,11 +341,7 @@ export const processCashPayment = async (req, res) => {
           phone: orderDetails.customerInfo.phone,
           email: orderDetails.customerInfo.email
         },
-        deliveryAddress: {
-          address: orderDetails.deliveryAddress?.address || 'No address provided',
-          lat: orderDetails.deliveryAddress?.lat,
-          lng: orderDetails.deliveryAddress?.lng
-        },
+        deliveryAddress,
         items: orderItems,
         pricing: {
           subtotal: orderDetails.subtotal,
@@ -282,7 +356,8 @@ export const processCashPayment = async (req, res) => {
         appliedCoupon: orderDetails.appliedCoupon ? {
           code: orderDetails.appliedCoupon.code,
           discount: orderDetails.appliedCoupon.discount_value || 0
-        } : {}
+        } : {},
+        estimatedDeliveryTime
       });
 
       const savedOrder = await newOrder.save();

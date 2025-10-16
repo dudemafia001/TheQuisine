@@ -1,16 +1,46 @@
-"use client";
-import { useEffect } from 'react';
+'use client';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useCart } from '../../contexts/CartContext';
+import { useCart } from '@/app/contexts/CartContext';
+import { useAuth } from '@/app/contexts/AuthContext';
+import './success.css';
 
 export default function CheckoutSuccessPage() {
   const router = useRouter();
   const { clearCart } = useCart();
+  const { user } = useAuth();
+  const [latestOrder, setLatestOrder] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     // Clear cart on successful order
     clearCart();
-  }, [clearCart]);
+    
+    // Fetch the latest order to get estimated delivery time
+    const fetchLatestOrder = async () => {
+      try {
+        const response = await fetch(`http://localhost:5001/api/orders/user/${user}`);
+        if (response.ok) {
+          const orders = await response.json();
+          if (orders.length > 0) {
+            // Get the most recent order
+            const mostRecentOrder = orders.sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0];
+            setLatestOrder(mostRecentOrder);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching latest order:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (user) {
+      fetchLatestOrder();
+    } else {
+      setLoading(false);
+    }
+  }, [clearCart, user]);
 
   return (
     <div className="success-container">
@@ -24,7 +54,9 @@ export default function CheckoutSuccessPage() {
         <div className="success-details">
           <div className="detail-item">
             <span className="detail-label">🕒 Estimated Delivery:</span>
-            <span className="detail-value">55-70 minutes</span>
+            <span className="detail-value">
+              {loading ? 'Calculating...' : latestOrder?.estimatedDeliveryTime || '45-60 minutes'}
+            </span>
           </div>
           <div className="detail-item">
             <span className="detail-label">📱 Order Updates:</span>

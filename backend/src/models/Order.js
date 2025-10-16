@@ -45,7 +45,7 @@ const orderSchema = new mongoose.Schema({
     enum: ['placed', 'confirmed', 'preparing', 'out_for_delivery', 'delivered', 'cancelled'], 
     default: 'placed' 
   },
-  estimatedDeliveryTime: { type: String, default: '55-70 minutes' },
+  estimatedDeliveryTime: { type: String }, // Will be calculated based on distance
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now }
 });
